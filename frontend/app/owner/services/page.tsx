@@ -1,0 +1,211 @@
+'use client';
+
+import React, { useState } from 'react';
+import { 
+    FiPlus, 
+    FiClock, 
+    FiEdit2, 
+    FiTrash2, 
+    FiSearch, 
+    FiBell, 
+    FiUser,
+    FiScissors,
+    FiCheckSquare,
+    FiWind,
+    FiLayers
+} from 'react-icons/fi';
+
+export default function ServicesManagementPage() {
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const categories = ['All', 'Hair', 'Nails', 'Skincare', 'Massage'];
+
+  const services = [
+    {
+        id: 1,
+        name: 'Signature Balayage',
+        price: '$180+',
+        duration: '120 min',
+        category: 'Hair',
+        icon: <FiScissors />,
+        active: true,
+        staff: 4,
+        image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'
+    },
+    {
+        id: 2,
+        name: 'Gel Manicure',
+        price: '$45',
+        duration: '45 min',
+        category: 'Nails',
+        icon: <FiCheckSquare />,
+        active: true,
+        staff: 2,
+        image: 'https://images.unsplash.com/photo-1604654894610-df490668711d?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'
+    },
+    {
+        id: 3,
+        name: 'Deep Tissue Massage',
+        price: '$120',
+        duration: '60 min',
+        category: 'Massage',
+        icon: <FiLayers />,
+        active: false,
+        staff: 1,
+        image: 'https://images.unsplash.com/photo-1544161515-4af6b1d46152?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'
+    },
+    {
+        id: 4,
+        name: 'Hydra-Radiance Facial',
+        price: '$95',
+        duration: '75 min',
+        category: 'Skincare',
+        icon: <FiWind />,
+        active: true,
+        staff: 2,
+        image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'
+    }
+  ];
+
+  return (
+    <div className="pb-5">
+      {/* HEADER SECTION */}
+      <header className="d-flex align-items-center justify-content-between mb-5 px-2">
+        <div className="position-relative d-none d-md-block" style={{ width: '400px' }}>
+          <FiSearch className="position-absolute translate-middle-y text-muted opacity-50" style={{ top: '50%', left: '16px' }} size={18} />
+          <input 
+            type="text" 
+            placeholder="Search services..." 
+            className="form-control rounded-pill border-0 shadow-sm ps-5 py-3 bg-white"
+            style={{ fontSize: '0.9rem' }}
+          />
+        </div>
+        <div className="d-flex align-items-center gap-4">
+            <div className="d-flex align-items-center gap-3 text-muted">
+                <FiBell size={20} className="cursor-pointer hover-rust transition-all" />
+                <div className="rounded-circle border border-2 border-white shadow-sm overflow-hidden" style={{ width: '36px', height: '36px' }}>
+                     <FiUser size={18} className="m-2" />
+                </div>
+            </div>
+            <button className="btn btn-rust rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 shadow-sm border-0 transition-all hover-scale">
+                <FiPlus size={18} /> Add Service
+            </button>
+        </div>
+      </header>
+
+      {/* PAGE TITLE */}
+      <div className="mb-5 px-2">
+        <h1 className="fw-bold display-5 mb-2" style={{ letterSpacing: '-1.5px' }}>Services Management</h1>
+        <p className="text-muted mb-0 lh-base" style={{ maxWidth: '600px' }}>
+            Manage your salon's treatment menu and pricing. Adjust durations, staff assignments, and availability in real-time.
+        </p>
+      </div>
+
+      {/* CATEGORY TABS */}
+      <div className="d-flex gap-3 mb-5 px-2 overflow-auto scrollbar-none pb-2">
+        {categories.map((cat) => (
+            <button 
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`btn rounded-pill px-4 py-2 fw-bold text-nowrap transition-all ${activeCategory === cat ? 'btn-rust text-white shadow' : 'bg-white text-muted hover-bg-light shadow-sm border-0'}`}
+                style={{ fontSize: '0.85rem' }}
+            >
+                {cat}
+            </button>
+        ))}
+      </div>
+
+      {/* SERVICE GRID */}
+      <div className="row g-4 px-2">
+        {/* ADD NEW SERVICE PLACEHOLDER */}
+        <div className="col-12 col-md-6 col-xl-4">
+            <div className="bg-white rounded-5 p-5 border border-2 border-dashed border-opacity-20 d-flex flex-column align-items-center justify-content-center text-center h-100 transition-all hover-rust hover-scale cursor-pointer" style={{ minHeight: '350px' }}>
+                <div className="bg-sand rounded-pill p-4 mb-4 text-rust">
+                    <FiPlus size={32} />
+                </div>
+                <h5 className="fw-bold mb-2">Add New Service</h5>
+                <p className="text-muted small px-4 mb-0">Introduce a new luxury treatment to your portfolio.</p>
+            </div>
+        </div>
+
+        {/* SERVICE CARDS */}
+        {services.map((svc) => (
+            <div key={svc.id} className="col-12 col-md-6 col-xl-4">
+                <div className={`bg-white rounded-5 shadow-sm border border-opacity-10 overflow-hidden h-100 transition-all hover-scale ${!svc.active ? 'grayscale' : ''}`}>
+                    <div className="position-relative" style={{ height: '220px' }}>
+                        <img src={svc.image} className="w-100 h-100 object-fit-cover" alt={svc.name} />
+                        {/* Price Badge */}
+                        <div className="position-absolute top-0 end-0 m-3 bg-white bg-opacity-75 backdrop-blur rounded-pill px-3 py-1 fw-bold text-dark shadow-sm" style={{ fontSize: '0.75rem', backgroundColor: 'rgba(255,255,255,0.85)' }}>
+                            {svc.price}
+                        </div>
+                        {/* Inactive Overlay */}
+                        {!svc.active && (
+                            <div className="position-absolute inset-0 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center">
+                                <h4 className="fw-bold text-white letter-spaced mb-0">INACTIVE</h4>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="p-4">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5 className="fw-bold mb-0">{svc.name}</h5>
+                            <div className="form-check form-switch m-0">
+                                <input className="form-check-input custom-switch" type="checkbox" checked={svc.active} readOnly />
+                            </div>
+                        </div>
+                        
+                        <div className="d-flex align-items-center gap-3 text-muted small mb-4 fw-medium">
+                            <div className="d-flex align-items-center gap-1">
+                                <FiClock size={14} className="opacity-50" /> {svc.duration}
+                            </div>
+                            <div className="d-flex align-items-center gap-1">
+                                <span className="opacity-50">{svc.icon}</span> {svc.category}
+                            </div>
+                        </div>
+
+                        <div className="d-flex justify-content-between align-items-center pt-3 border-top border-opacity-10">
+                            <div className="d-flex align-items-center">
+                                {[...Array(Math.min(3, svc.staff))].map((_, i) => (
+                                    <div key={i} className="rounded-circle border border-2 border-white shadow-sm overflow-hidden" style={{ width: '32px', height: '32px', marginLeft: i > 0 ? '-10px' : '0' }}>
+                                        <img src={`https://i.pravatar.cc/100?u=${svc.id}-${i}`} className="w-100 h-100 object-fit-cover" alt="staff" />
+                                    </div>
+                                ))}
+                                {svc.staff > 3 && (
+                                    <div className="rounded-circle border border-2 border-white bg-sand d-flex align-items-center justify-content-center fw-bold text-muted small" style={{ width: '32px', height: '32px', marginLeft: '-10px', fontSize: '0.6rem' }}>
+                                        +{svc.staff - 2}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="d-flex gap-3 text-muted">
+                                <FiEdit2 className="cursor-pointer hover-rust trasition-all" size={18} />
+                                <FiTrash2 className="cursor-pointer hover-danger transition-all text-danger opacity-50 hover-opacity-100" size={18} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ))}
+      </div>
+
+      <style jsx>{`
+        .bg-sand { background-color: #FDFBF7; }
+        .text-rust { color: #9C4A34; }
+        .bg-rust { background-color: #9C4A34; }
+        .letter-spaced { letter-spacing: 2px; }
+        .grayscale { filter: grayscale(100%); }
+        .grayscale img { opacity: 0.6; }
+        .backdrop-blur { backdrop-filter: blur(8px); }
+        .hover-scale:hover { transform: translateY(-5px); }
+        .transition-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        
+        .custom-switch:checked {
+            background-color: #9C4A34;
+            border-color: #9C4A34;
+        }
+        .hover-rust:hover { color: #9C4A34 !important; }
+        .hover-danger:hover { color: #dc3545 !important; opacity: 1 !important; }
+      `}</style>
+    </div>
+  );
+}

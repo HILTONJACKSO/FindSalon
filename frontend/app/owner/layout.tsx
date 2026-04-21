@@ -14,7 +14,9 @@ import {
   FiLogOut,
   FiPlus,
   FiMenu,
-  FiX
+  FiX,
+  FiPieChart,
+  FiGrid
 } from 'react-icons/fi';
 
 export default function OwnerLayout({
@@ -26,12 +28,11 @@ export default function OwnerLayout({
   const pathname = usePathname();
 
   const navItems = [
-    { label: 'Overview', icon: <FiDollarSign />, path: '/owner/dashboard' },
-    { label: 'Bookings', icon: <FiCalendar />, path: '/owner/bookings' },
-    { label: 'Inventory', icon: <FiDatabase />, path: '/owner/inventory' },
-    { label: 'Customers', icon: <FiUsers />, path: '/owner/customers' },
+    { label: 'Dashboard', icon: <FiGrid />, path: '/owner/dashboard' },
     { label: 'Services', icon: <FiScissors />, path: '/owner/services' },
-    { label: 'Settings', icon: <FiSettings />, path: '/owner/settings' },
+    { label: 'Bookings', icon: <FiCalendar />, path: '/owner/bookings' },
+    { label: 'Staff', icon: <FiUsers />, path: '/owner/staff' },
+    { label: 'Analytics', icon: <FiPieChart />, path: '/owner/analytics' },
   ];
 
   const isActive = (path: string) => {
@@ -64,8 +65,8 @@ export default function OwnerLayout({
         <div className="p-4 pt-5">
           {/* Logo / Salon Info */}
           <div className="mb-5">
-                <h4 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-1.5px' }}>Aura Luxe</h4>
-                <p className="text-muted fw-bold mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>PREMIUM SALON TIER</p>
+                <h4 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-1px' }}>The Tactile Salon</h4>
+                <p className="text-muted fw-bold mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>PREMIUM MANAGEMENT</p>
           </div>
 
           {/* Navigation */}
@@ -83,11 +84,13 @@ export default function OwnerLayout({
             ))}
           </nav>
 
-          {/* Book New Service CTA */}
-          <div className="mt-5 mb-5 pt-5">
-            <button className="btn btn-warning w-100 rounded-pill py-3 fw-bold text-white shadow-lg border-0 transition-all hover-scale" style={{ backgroundColor: '#9C4A34' }}>
-               Book New Service
-            </button>
+          {/* Upgrade Card */}
+          <div className="mx-2 mb-5">
+             <div className="bg-orange p-4 rounded-5 text-white" style={{ background: 'linear-gradient(135deg, #FF7E5F, #FE512E)' }}>
+                <h6 className="fw-bold mb-2">Upgrade to Pro</h6>
+                <p className="small opacity-75 mb-4" style={{ fontSize: '0.7rem' }}>Unlock advanced analytics and team scheduling tools.</p>
+                <button className="btn btn-dark w-100 rounded-pill py-2 fw-bold small border-0 shadow-sm" style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}>Upgrade</button>
+             </div>
           </div>
         </div>
 
