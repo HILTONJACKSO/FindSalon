@@ -26,11 +26,10 @@ export default function OwnerLayout({
   const pathname = usePathname();
 
   const navItems = [
-    { label: 'Revenue', icon: <FiDollarSign />, path: '/owner/dashboard' },
-    { label: 'Bookings', icon: <FiCalendar />, path: '/owner/bookings' },
-    { label: 'Services', icon: <FiScissors />, path: '/owner/services' },
+    { label: 'Overview', icon: <FiDollarSign />, path: '/owner/dashboard' },
     { label: 'Inventory', icon: <FiDatabase />, path: '/owner/inventory' },
     { label: 'Customers', icon: <FiUsers />, path: '/owner/customers' },
+    { label: 'Services', icon: <FiScissors />, path: '/owner/services' },
     { label: 'Settings', icon: <FiSettings />, path: '/owner/settings' },
   ];
 
@@ -63,20 +62,17 @@ export default function OwnerLayout({
       >
         <div className="p-4 pt-5">
           {/* Logo / Salon Info */}
-          <div className="d-flex align-items-center mb-5">
-            <div className="rounded-circle overflow-hidden bg-dark me-3" style={{ width: '48px', height: '48px' }}>
-                <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Salon" className="w-100 h-100 object-fit-cover" />
-            </div>
-            <div>
-                <h6 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-0.5px' }}>The Gilded Mane</h6>
-                <span className="text-muted small">Salon Dashboard</span>
-            </div>
+          <div className="mb-5">
+                <h4 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-1.5px' }}>Aura Luxe</h4>
+                <p className="text-muted fw-bold mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>PREMIUM SALON TIER</p>
           </div>
 
-          {/* Action Button */}
-          <button className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mb-5">
-            <FiPlus size={18} /> Add New Service
-          </button>
+          {/* Book Appointment CTA */}
+          <div className="mb-5">
+            <button className="btn btn-warning w-100 rounded-pill py-3 fw-bold text-white shadow-lg border-0 transition-all hover-scale" style={{ backgroundColor: '#E65C00' }}>
+               Book Appointment
+            </button>
+          </div>
 
           {/* Navigation */}
           <nav className="d-flex flex-column gap-2 mb-auto">
@@ -96,11 +92,11 @@ export default function OwnerLayout({
 
         {/* Sidebar Footer */}
         <div className="p-4 mt-auto border-top border-opacity-10">
-          <Link href="/owner/support" className="text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 hover-rust mb-2">
+          <Link href="/owner/support" className="text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 hover-rust mb-2 small fw-bold">
             <FiHelpCircle className="opacity-50" /> Support
           </Link>
-          <button className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mt-2">
-            <FiLogOut size={18} /> Logout
+          <button className="btn btn-link text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 w-100 text-start hover-rust p-0 shadow-none border-0 small fw-bold">
+            <FiLogOut className="opacity-50" /> Sign Out
           </button>
         </div>
       </aside>
