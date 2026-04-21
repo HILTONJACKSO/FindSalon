@@ -52,7 +52,7 @@ export default function OwnerLayout({
 
       {/* Sidebar */}
       <aside 
-        className={`bg-white border-end d-flex flex-column transition-all z-2 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-mobile-hide'} position-fixed position-md-sticky h-100vh h-md-auto`}
+        className={`bg-white border-end d-flex flex-column transition-all z-2 overflow-y-auto sidebar-custom-scroll ${isSidebarOpen ? 'translate-x-0' : 'translate-x-mobile-hide'} position-fixed position-md-sticky h-100vh h-md-auto`}
         style={{ 
           width: '280px', 
           minWidth: '280px', 
@@ -131,22 +131,22 @@ export default function OwnerLayout({
 
         /* Custom Scrollbar for Sidebar */
         .sidebar-custom-scroll::-webkit-scrollbar {
-          width: 4px;
+          width: 5px;
         }
         .sidebar-custom-scroll::-webkit-scrollbar-track {
-          background: transparent;
+          background: #FDFBF7;
         }
         .sidebar-custom-scroll::-webkit-scrollbar-thumb {
-          background-color: rgba(156, 74, 52, 0.2);
+          background-color: rgba(156, 74, 52, 0.4);
           border-radius: 10px;
           transition: background-color 0.3s ease;
         }
         .sidebar-custom-scroll:hover::-webkit-scrollbar-thumb {
-          background-color: rgba(156, 74, 52, 0.5);
+          background-color: rgba(156, 74, 52, 1);
         }
         .sidebar-custom-scroll {
           scrollbar-width: thin;
-          scrollbar-color: rgba(156, 74, 52, 0.3) transparent;
+          scrollbar-color: rgba(156, 74, 52, 0.4) #FDFBF7;
         }
       `}</style>
     </div>
