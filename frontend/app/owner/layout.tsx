@@ -99,8 +99,8 @@ export default function OwnerLayout({
           <Link href="/owner/support" className="text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 hover-rust mb-2">
             <FiHelpCircle className="opacity-50" /> Support
           </Link>
-          <button className="btn btn-link text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 w-100 text-start hover-rust p-0 shadow-none border-0">
-            <FiLogOut className="opacity-50" /> Logout
+          <button className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mt-2">
+            <FiLogOut size={18} /> Logout
           </button>
         </div>
       </aside>
