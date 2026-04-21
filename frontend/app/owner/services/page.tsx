@@ -189,6 +189,9 @@ export default function ServicesManagementPage() {
                         </div>
                     </div>
                 </div>
+            </div>
+        ))}
+      </div>
 
       {/* ADD SERVICE MODAL */}
       {isModalOpen && (
@@ -236,18 +239,8 @@ export default function ServicesManagementPage() {
                     </div>
                 </div>
             </div>
-            <style jsx>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-            `}</style>
         </div>
       )}
-            </div>
-        ))}
-      </div>
 
       <style jsx>{`
         .bg-sand { background-color: #FDFBF7; }
@@ -267,7 +260,16 @@ export default function ServicesManagementPage() {
         }
         .hover-rust:hover { color: #9C4A34 !important; }
         .hover-danger:hover { color: #dc3545 !important; opacity: 1 !important; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
       `}</style>
+    </div>
+  );
+}
     </div>
   );
 }
