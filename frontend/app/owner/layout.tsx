@@ -128,6 +128,26 @@ export default function OwnerLayout({
         .transition-all {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* Custom Scrollbar for Sidebar */
+        .sidebar-custom-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        .sidebar-custom-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .sidebar-custom-scroll::-webkit-scrollbar-thumb {
+          background-color: rgba(156, 74, 52, 0.2);
+          border-radius: 10px;
+          transition: background-color 0.3s ease;
+        }
+        .sidebar-custom-scroll:hover::-webkit-scrollbar-thumb {
+          background-color: rgba(156, 74, 52, 0.5);
+        }
+        .sidebar-custom-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(156, 74, 52, 0.3) transparent;
+        }
       `}</style>
     </div>
   );
