@@ -27,6 +27,7 @@ export default function OwnerLayout({
 
   const navItems = [
     { label: 'Overview', icon: <FiDollarSign />, path: '/owner/dashboard' },
+    { label: 'Bookings', icon: <FiCalendar />, path: '/owner/bookings' },
     { label: 'Inventory', icon: <FiDatabase />, path: '/owner/inventory' },
     { label: 'Customers', icon: <FiUsers />, path: '/owner/customers' },
     { label: 'Services', icon: <FiScissors />, path: '/owner/services' },
