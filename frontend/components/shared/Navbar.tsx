@@ -15,6 +15,9 @@ export default function Navbar({
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
+  // Hide global navbar for owner dashboard pages
+  if (pathname?.startsWith('/owner')) return null;
+
   // Auto-detect states based on route if not provided as props
   const isLoggedIn = propIsLoggedIn ?? (
     pathname?.startsWith('/profile') || 
