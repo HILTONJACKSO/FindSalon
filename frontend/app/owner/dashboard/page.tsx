@@ -97,8 +97,8 @@ export default function OwnerDashboard() {
                         <h4 className="fw-bold mb-1">Revenue Growth</h4>
                         <p className="text-muted small mb-0">Weekly performance analysis</p>
                     </div>
-                    <div className="badge bg-rust bg-opacity-10 text-rust rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2">
-                         Live Data <span className="rounded-circle bg-rust" style={{ width: '6px', height: '6px' }}></span>
+                    <div className="badge bg-rust text-white rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 shadow-sm">
+                         Live Data <span className="rounded-circle bg-white" style={{ width: '6px', height: '6px' }}></span>
                     </div>
                 </div>
 
