@@ -210,44 +210,46 @@ export default function ServicesManagementPage() {
                         </button>
                     </div>
 
-                    <div className="row g-4">
-                        <div className="col-12">
-                            <label className="form-label text-muted small fw-bold letter-spaced">SERVICE COVER IMAGE</label>
-                            <div className="rounded-5 border-2 border-dashed border-opacity-10 bg-sand p-4 text-center cursor-pointer mb-2 transition-all hover-rust">
-                                <div className="d-flex flex-column align-items-center">
-                                    <FiImage size={40} className="mb-2 opacity-50" />
-                                    <span className="small fw-bold opacity-75">Click to browse or drag image here</span>
-                                    <span className="text-muted" style={{ fontSize: '0.65rem' }}>PNG, JPG or WEBP (Max 5MB)</span>
+                    <div className="custom-scrollbar pe-2" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                        <div className="row g-4 m-0">
+                            <div className="col-12">
+                                <label className="form-label text-muted small fw-bold letter-spaced">SERVICE COVER IMAGE</label>
+                                <div className="rounded-5 border-2 border-dashed border-opacity-10 bg-sand p-4 text-center cursor-pointer mb-2 transition-all hover-rust">
+                                    <div className="d-flex flex-column align-items-center">
+                                        <FiImage size={40} className="mb-2 opacity-50" />
+                                        <span className="small fw-bold opacity-75">Click to browse or drag image here</span>
+                                        <span className="text-muted" style={{ fontSize: '0.65rem' }}>PNG, JPG or WEBP (Max 5MB)</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="col-12">
-                            <label className="form-label text-muted small fw-bold letter-spaced">SERVICE NAME</label>
-                            <input type="text" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" placeholder="e.g. Signature Director's Cut" />
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label text-muted small fw-bold letter-spaced">CATEGORY</label>
-                            <select className="form-select rounded-pill border-0 bg-sand p-3 shadow-none fw-bold">
-                                {categories.slice(1).map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label text-muted small fw-bold letter-spaced">PRICE (USD)</label>
-                            <input type="text" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" placeholder="$0.00" />
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label text-muted small fw-bold letter-spaced">DURATION (MIN)</label>
-                            <input type="text" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" placeholder="60" />
-                        </div>
-                        <div className="col-md-6">
-                            <label className="form-label text-muted small fw-bold letter-spaced">MAX STAFF</label>
-                            <input type="number" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" defaultValue={1} />
-                        </div>
-                        <div className="col-12 mt-5">
-                            <button className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm transition-all hover-scale" onClick={toggleModal}>
-                                Create Treatment Profile
-                            </button>
+                            <div className="col-12">
+                                <label className="form-label text-muted small fw-bold letter-spaced">SERVICE NAME</label>
+                                <input type="text" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" placeholder="e.g. Signature Director's Cut" />
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label text-muted small fw-bold letter-spaced">CATEGORY</label>
+                                <select className="form-select rounded-pill border-0 bg-sand p-3 shadow-none fw-bold">
+                                    {categories.slice(1).map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label text-muted small fw-bold letter-spaced">PRICE (USD)</label>
+                                <input type="text" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" placeholder="$0.00" />
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label text-muted small fw-bold letter-spaced">DURATION (MIN)</label>
+                                <input type="text" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" placeholder="60" />
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label text-muted small fw-bold letter-spaced">MAX STAFF</label>
+                                <input type="number" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" defaultValue={1} />
+                            </div>
+                            <div className="col-12 mt-5">
+                                <button className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm transition-all hover-scale" onClick={toggleModal}>
+                                    Create Treatment Profile
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -279,6 +281,22 @@ export default function ServicesManagementPage() {
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #fdfbf7;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(156, 74, 52, 0.2);
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 74, 52, 0.5);
+        }
       `}</style>
     </div>
   );
