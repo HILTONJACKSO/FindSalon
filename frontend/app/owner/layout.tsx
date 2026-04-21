@@ -63,19 +63,12 @@ export default function OwnerLayout({
         <div className="p-4 pt-5">
           {/* Logo / Salon Info */}
           <div className="mb-5">
-                <h4 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-1.5px' }}>Aura Luxe</h4>
-                <p className="text-muted fw-bold mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>PREMIUM SALON TIER</p>
-          </div>
-
-          {/* Book Appointment CTA */}
-          <div className="mb-5">
-            <button className="btn btn-warning w-100 rounded-pill py-3 fw-bold text-white shadow-lg border-0 transition-all hover-scale" style={{ backgroundColor: '#E65C00' }}>
-               Book Appointment
-            </button>
+                <h4 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-1px' }}>Aura Velvet Salon</h4>
+                <p className="text-muted fw-bold mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>PREMIUM TIER</p>
           </div>
 
           {/* Navigation */}
-          <nav className="d-flex flex-column gap-2 mb-auto">
+          <nav className="d-flex flex-column gap-3 mb-5">
             {navItems.map((item) => (
               <Link 
                 key={item.path} 
@@ -84,20 +77,37 @@ export default function OwnerLayout({
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <span className={isActive(item.path) ? 'text-rust' : 'text-muted opacity-50'}>{item.icon}</span>
-                <span style={{ fontSize: '0.95rem' }}>{item.label}</span>
+                <span style={{ fontSize: '0.9rem' }}>{item.label}</span>
               </Link>
             ))}
           </nav>
+
+          {/* Book New Service CTA */}
+          <div className="mt-5 mb-5 pt-5">
+            <button className="btn btn-warning w-100 rounded-pill py-3 fw-bold text-white shadow-lg border-0 transition-all hover-scale" style={{ backgroundColor: '#9C4A34' }}>
+               Book New Service
+            </button>
+          </div>
         </div>
 
-        {/* Sidebar Footer */}
+        {/* Sidebar Footer - Profile Card */}
         <div className="p-4 mt-auto border-top border-opacity-10">
-          <Link href="/owner/support" className="text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 hover-rust mb-2 small fw-bold">
+          <Link href="/owner/settings" className="text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 hover-rust mb-3 small fw-bold">
+            <FiSettings className="opacity-50" /> Settings
+          </Link>
+          <Link href="/owner/support" className="text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 hover-rust mb-4 small fw-bold">
             <FiHelpCircle className="opacity-50" /> Support
           </Link>
-          <button className="btn btn-link text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 w-100 text-start hover-rust p-0 shadow-none border-0 small fw-bold">
-            <FiLogOut className="opacity-50" /> Sign Out
-          </button>
+          
+          <div className="d-flex align-items-center gap-3 px-3 py-2 bg-sand rounded-4 border border-opacity-10">
+            <div className="rounded-circle overflow-hidden bg-secondary shadow-sm" style={{ width: '40px', height: '40px' }}>
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" alt="Owner" className="w-100 h-100 object-fit-cover" />
+            </div>
+            <div className="flex-grow-1 min-w-0">
+                <h6 className="fw-bold mb-0 text-dark small text-truncate">Salon Owner Profile</h6>
+                <span className="text-muted" style={{ fontSize: '0.65rem' }}>View Account</span>
+            </div>
+          </div>
         </div>
       </aside>
 
