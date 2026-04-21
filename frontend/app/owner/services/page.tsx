@@ -12,7 +12,9 @@ import {
     FiScissors,
     FiCheckSquare,
     FiWind,
-    FiLayers
+    FiLayers,
+    FiImage,
+    FiCamera
 } from 'react-icons/fi';
 
 export default function ServicesManagementPage() {
@@ -208,7 +210,17 @@ export default function ServicesManagementPage() {
                         </button>
                     </div>
 
-                    <div className="row g-4">
+                        <div className="col-12">
+                            <label className="form-label text-muted small fw-bold letter-spaced">SERVICE COVER IMAGE</label>
+                            <div className="rounded-5 border-2 border-dashed border-opacity-10 bg-sand p-4 text-center cursor-pointer mb-2 transition-all hover-rust">
+                                <div className="d-flex flex-column align-items-center">
+                                    <FiImage size={40} className="mb-2 opacity-50" />
+                                    <span className="small fw-bold opacity-75">Click to browse or drag image here</span>
+                                    <span className="text-muted" style={{ fontSize: '0.65rem' }}>PNG, JPG or WEBP (Max 5MB)</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="col-12">
                             <label className="form-label text-muted small fw-bold letter-spaced">SERVICE NAME</label>
                             <input type="text" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" placeholder="e.g. Signature Director's Cut" />
