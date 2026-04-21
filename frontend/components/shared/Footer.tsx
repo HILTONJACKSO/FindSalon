@@ -1,7 +1,17 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // Hide global footer for owner and admin dashboard pages
+  if (pathname?.startsWith('/owner') || pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <footer className="mt-5 pt-4 border-top bg-white">
       <div className="container">
