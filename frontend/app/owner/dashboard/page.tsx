@@ -223,36 +223,6 @@ export default function OwnerDashboard() {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <footer className="mt-5 pt-5 border-top border-opacity-10">
-        <div className="row g-4 justify-content-between">
-            <div className="col-12 col-md-4">
-                <div className="fw-bold fs-4 mb-3">FindSalon</div>
-                <p className="text-muted small lh-lg mb-0" style={{ maxWidth: '300px' }}>
-                    Providing the world's finest curators with the tools to redefine beauty services. The Tactile Curator.
-                </p>
-            </div>
-            <div className="col-6 col-md-2">
-                <h6 className="fw-bold text-muted mb-4 small letter-spaced" style={{ letterSpacing: '1px' }}>MANAGEMENT</h6>
-                <ul className="list-unstyled d-flex flex-column gap-3 text-muted" style={{ fontSize: '0.9rem' }}>
-                    <li>Revenue Reports</li>
-                    <li>Staff Scheduling</li>
-                    <li>Inventory Logs</li>
-                </ul>
-            </div>
-            <div className="col-6 col-md-2">
-                <h6 className="fw-bold text-muted mb-4 small letter-spaced" style={{ letterSpacing: '1px' }}>SUPPORT</h6>
-                <ul className="list-unstyled d-flex flex-column gap-3 text-muted" style={{ fontSize: '0.9rem' }}>
-                    <li>Help Center</li>
-                    <li>Privacy Policy</li>
-                    <li>Terms of Service</li>
-                </ul>
-            </div>
-        </div>
-        <div className="mt-5 pt-4 text-muted border-top border-opacity-5" style={{ fontSize: '0.75rem' }}>
-            © 2024 FindSalon. The Tactile Curator. All rights reserved.
-        </div>
-      </footer>
 
       <style jsx>{`
         .fs-7 { font-size: 0.65rem; }
