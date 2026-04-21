@@ -30,7 +30,7 @@ export default function OwnerHeader() {
         
         <div className="border-start ps-4 d-flex align-items-center gap-3">
           <div className="text-end d-none d-lg-block">
-            <h6 className="fw-bold mb-0 text-dark small">Aura Management</h6>
+            <h6 className="fw-bold mb-0 text-dark small">Tactile Management</h6>
             <span className="text-muted fw-bold" style={{ fontSize: '0.65rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Salon Owner</span>
           </div>
           <div className="rounded-circle overflow-hidden bg-sand border border-white border-2 shadow-sm" style={{ width: '40px', height: '40px' }}>

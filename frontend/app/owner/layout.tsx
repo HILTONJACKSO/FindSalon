@@ -65,8 +65,8 @@ export default function OwnerLayout({
         <div className="p-4 pt-5">
           {/* Logo / Salon Info */}
           <div className="mb-5">
-                <h4 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-1px' }}>The Tactile Salon</h4>
-                <p className="text-muted fw-bold mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>PREMIUM MANAGEMENT</p>
+                <h4 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-1.5px' }}>Aura Luxe</h4>
+                <p className="text-muted fw-bold mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>PREMIUM SALON TIER</p>
           </div>
 
           {/* Navigation */}
