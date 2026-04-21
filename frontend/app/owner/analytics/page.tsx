@@ -189,7 +189,8 @@ export default function AnalyticsPage() {
                         <div key={day} className="d-flex align-items-center gap-1 mb-1">
                             <div className="tiny fw-bold text-muted opacity-50 pe-3" style={{ width: '40px' }}>{day}</div>
                             {[...Array(12)].map((_, i) => {
-                                const intensity = Math.random();
+                                // Deterministic intensity based on index to avoid hydration mismatch
+                                const intensity = ((idx * 7) + (i * 3)) % 10 / 10;
                                 return (
                                     <div 
                                         key={i} 

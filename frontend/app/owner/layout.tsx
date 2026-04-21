@@ -16,7 +16,8 @@ import {
   FiMenu,
   FiX,
   FiPieChart,
-  FiGrid
+  FiGrid,
+  FiBriefcase
 } from 'react-icons/fi';
 
 export default function OwnerLayout({
@@ -33,7 +34,7 @@ export default function OwnerLayout({
     { label: 'Bookings', icon: <FiCalendar />, path: '/owner/bookings' },
     { label: 'Inventory', icon: <FiDatabase />, path: '/owner/inventory' },
     { label: 'Customers', icon: <FiUsers />, path: '/owner/customers' },
-    { label: 'Staff', icon: <FiUsers />, path: '/owner/staff' },
+    { label: 'Staff', icon: <FiBriefcase />, path: '/owner/staff' },
     { label: 'Analytics', icon: <FiPieChart />, path: '/owner/analytics' },
   ];
 
