@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FiTrendingUp, FiCalendar, FiClock, FiUsers, FiArrowRight, FiCheck, FiMoreHorizontal } from 'react-icons/fi';
+import { FiTrendingUp, FiCalendar, FiClock, FiUsers, FiArrowRight, FiCheck, FiMoreHorizontal, FiDatabase } from 'react-icons/fi';
 
 export default function OwnerDashboard() {
   const kpis = [
