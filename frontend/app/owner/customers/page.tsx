@@ -148,21 +148,25 @@ export default function CustomersPage() {
         <div className="col-12 col-xl-4">
           <div className="bg-white rounded-5 p-5 shadow-sm border border-opacity-10 h-100">
             <h4 className="fw-bold mb-5">Recent Activity</h4>
-            <div className="d-flex flex-column gap-5">
-              <div className="d-flex gap-4">
-                <div className="border-start border-4 border-rust ps-4">
+            <div className="d-flex flex-column gap-5 position-relative ms-2">
+              {/* Vertical line indicator */}
+              <div className="position-absolute start-0 h-100 border-start border-2 opacity-10" style={{ marginLeft: '-1px' }}></div>
+              
+              <div className="d-flex flex-column gap-5">
+                <div className="position-relative ps-4">
+                   <div className="position-absolute start-0 rounded-circle bg-rust" style={{ width: '12px', height: '12px', marginLeft: '-7px', top: '5px' }}></div>
                    <h6 className="fw-bold mb-1">Elena Rodriguez booked Balayage</h6>
                    <span className="text-muted small">2 hours ago</span>
                 </div>
-              </div>
-              <div className="d-flex gap-4">
-                <div className="border-start border-4 border-warning ps-4" style={{ borderColor: '#FFCC00 !important' }}>
+                
+                <div className="position-relative ps-4 text-muted">
+                   <div className="position-absolute start-0 rounded-circle bg-secondary bg-opacity-50" style={{ width: '12px', height: '12px', marginLeft: '-7px', top: '5px' }}></div>
                    <h6 className="fw-bold mb-1">New note added for Sienna B.</h6>
                    <span className="text-muted small">Yesterday</span>
                 </div>
-              </div>
-              <div className="d-flex gap-4">
-                <div className="border-start border-4 border-info ps-4" style={{ borderColor: '#00CCFF !important' }}>
+
+                <div className="position-relative ps-4 text-muted">
+                   <div className="position-absolute start-0 rounded-circle bg-secondary bg-opacity-30" style={{ width: '12px', height: '12px', marginLeft: '-7px', top: '5px' }}></div>
                    <h6 className="fw-bold mb-1">Marcus Thorne's status: VIP</h6>
                    <span className="text-muted small">3 days ago</span>
                 </div>
