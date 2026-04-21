@@ -210,6 +210,7 @@ export default function ServicesManagementPage() {
                         </button>
                     </div>
 
+                    <div className="row g-4">
                         <div className="col-12">
                             <label className="form-label text-muted small fw-bold letter-spaced">SERVICE COVER IMAGE</label>
                             <div className="rounded-5 border-2 border-dashed border-opacity-10 bg-sand p-4 text-center cursor-pointer mb-2 transition-all hover-rust">
