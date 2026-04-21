@@ -23,6 +23,10 @@ export default function OwnerHeader() {
           <FiBell size={20} className="cursor-pointer hover-rust transition-all" />
           <FiHelpCircle size={20} className="cursor-pointer hover-rust transition-all" />
         </div>
+
+        <button className="btn btn-rust d-none d-lg-block rounded-3 px-4 py-2 fw-bold small shadow-sm border-0 transition-all hover-scale" style={{ fontSize: '0.8rem' }}>
+            Quick Action
+        </button>
         
         <div className="border-start ps-4 d-flex align-items-center gap-3">
           <div className="text-end d-none d-lg-block">
