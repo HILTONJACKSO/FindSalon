@@ -1,233 +1,381 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { FiBell, FiShoppingBag, FiMapPin, FiCalendar, FiChevronRight, FiLogOut, FiHeart, FiStar, FiCheck, FiUser, FiCreditCard, FiShield, FiEdit2 } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
+import { 
+  FiShoppingBag, FiMapPin, FiCalendar, FiChevronRight, 
+  FiLogOut, FiHeart, FiStar, FiUser, FiCreditCard, 
+  FiShield, FiEdit2, FiBell
+} from 'react-icons/fi';
 import { FaHeart, FaStar } from 'react-icons/fa';
+import { useAuthStore } from '@/store/authStore';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { getImageUrl, api } from '@/lib/api';
+
+// --- Interfaces ---
+interface SalonDetails {
+  id: string;
+  name: string;
+  image?: string;
+  cover_image?: string;
+  rating?: number;
+  reviews_count?: number;
+  address: string;
+}
+
+interface ServiceDetails {
+  id: string;
+  name: string;
+}
+
+interface Booking {
+  id: string;
+  salon_details: SalonDetails;
+  service_details: ServiceDetails;
+  date: string;
+  start_time: string;
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+}
+
+interface Review {
+  id: string;
+  salon_details: { name: string };
+  rating: number;
+  comment: string;
+}
+
+// --- Component ---
 export default function UserProfile() {
+  const router = useRouter();
+  const { user, initialized, token } = useAuthStore();
+  
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [favorites, setFavorites] = useState<SalonDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Authentication Guard
+  useEffect(() => {
+    if (initialized && typeof window !== 'undefined') {
+      if (!user) {
+        router.push('/login');
+      } else if (user.role === 'OWNER') {
+        router.push('/owner/dashboard');
+      }
+    }
+  }, [initialized, user, router]);
+
+  // Data Fetching
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user || !token) return;
+
+      try {
+        const endpoints = [
+          { key: 'bookings', url: 'bookings/' },
+          { key: 'reviews', url: 'reviews/mine/' },
+          { key: 'favorites', url: 'salons/followed/' }
+        ];
+
+        const results = await Promise.allSettled(
+          endpoints.map(e => api.get(e.url))
+        );
+
+        results.forEach((res, i) => {
+          if (res.status === 'fulfilled') {
+            const data = Array.isArray(res.value.data) ? res.value.data : res.value.data.results || [];
+            const key = endpoints[i].key;
+            if (key === 'bookings') setBookings(data);
+            if (key === 'reviews') setReviews(data);
+            if (key === 'favorites') setFavorites(data);
+          } else {
+            console.error(`Failed to fetch ${endpoints[i].key}:`, res.reason);
+          }
+        });
+      } catch (error) {
+        console.error('Critical error fetching profile data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (initialized && user) {
+      fetchProfileData();
+    }
+  }, [user, initialized, token]);
+
+  const handleAvatarUpdate = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      const res = await api.patch('/auth/profile/', formData);
+      useAuthStore.getState().setAuth({ ...user, avatar: res.data.avatar } as any, token);
+    } catch (error) {
+      console.error('Avatar upload failed:', error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
+
+  if (!initialized || !user) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-sand">
+        <div className="spinner-border text-rust" role="status" />
+      </div>
+    );
+  }
+
+  const memberSince = user?.date_joined 
+    ? new Date(user.date_joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : 'New Member';
+
   return (
-    <div className="min-vh-100 d-flex flex-column" style={{ backgroundColor: '#FDFBF7' }}>
+    <div className="min-vh-100 d-flex flex-column bg-sand">
       <main className="container-fluid px-3 px-md-5 pb-5 pt-2" style={{ maxWidth: '1400px' }}>
          
-         {/* Hero Block */}
-         <div className="bg-white rounded-5 shadow-sm p-4 p-md-5 mb-5 d-flex flex-column flex-md-row align-items-center justify-content-between position-relative overflow-hidden border border-opacity-10 text-center text-md-start">
-             <div className="d-flex flex-column flex-md-row align-items-center gap-4 gap-md-5 z-1">
-                 <div className="position-relative">
-                     <div className="rounded-circle overflow-hidden border border-4 border-white shadow-sm" style={{ width: '140px', height: '140px', backgroundColor: '#e9ecef' }}>
-                         <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Alex Rivera" className="w-100 h-100 object-fit-cover" />
-                     </div>
-                     <div className="position-absolute bg-rust text-white rounded-circle d-flex align-items-center justify-content-center shadow border border-2 border-white cursor-pointer" style={{ width: '32px', height: '32px', bottom: '5px', right: '5px' }}>
-                         <FiEdit2 size={14} />
-                     </div>
-                 </div>
-                 
-                 <div>
-                     <h1 className="fw-bold fs-1 mb-2 text-dark" style={{ letterSpacing: '-1px' }}>Alex Rivera</h1>
-                     <div className="d-flex flex-column flex-sm-row gap-3 gap-sm-4 text-muted fw-medium small">
-                         <span className="d-flex align-items-center justify-content-center justify-content-md-start"><FiMapPin className="text-rust me-2" size={16}/> New York, NY</span>
-                         <span className="d-flex align-items-center justify-content-center justify-content-md-start"><FiCalendar className="text-rust me-2" size={16}/> Member since Oct 2022</span>
-                     </div>
-                 </div>
+         {/* User Header Card */}
+         <section className="bg-white rounded-5 shadow-sm p-4 p-md-5 mb-5 d-flex flex-column flex-md-row align-items-center justify-content-between border border-opacity-10 text-center text-md-start">
+             <div className="d-flex flex-column flex-md-row align-items-center gap-4 gap-md-5">
+                  <div className="position-relative">
+                      <div className="rounded-circle overflow-hidden border border-4 border-white shadow-sm bg-sand d-flex align-items-center justify-content-center" style={{ width: '140px', height: '140px' }}>
+                          {user?.avatar ? (
+                            <img 
+                              src={getImageUrl(user.avatar) || ''} 
+                              alt={user?.first_name || 'User'} 
+                              className="w-100 h-100 object-fit-cover" 
+                            />
+                          ) : (
+                            <span className="fw-bold text-rust display-4">
+                              {(user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')}
+                            </span>
+                          )}
+                      </div>
+                       <button 
+                         onClick={() => fileInputRef.current?.click()}
+                         className="position-absolute bg-rust text-white rounded-circle d-flex align-items-center justify-content-center shadow border border-2 border-white cursor-pointer transition-all hover-scale" 
+                         style={{ width: '32px', height: '32px', bottom: '5px', right: '5px' }}
+                         aria-label="Edit Avatar"
+                       >
+                           <FiEdit2 size={14} />
+                       </button>
+                       <input 
+                         type="file" 
+                         ref={fileInputRef} 
+                         onChange={handleAvatarUpdate} 
+                         accept="image/*" 
+                         className="d-none" 
+                       />
+                  </div>
+                  
+                  <div>
+                      <h1 className="fw-bold fs-1 mb-2 text-dark" style={{ letterSpacing: '-1px' }}>
+                        {user?.first_name} {user?.last_name}
+                      </h1>
+                      <div className="d-flex flex-column flex-sm-row gap-3 gap-sm-4 text-muted fw-medium small">
+                          <span className="d-flex align-items-center justify-content-center justify-content-md-start">
+                            <FiMapPin className="text-rust me-2" size={16}/> {user?.location || 'Monrovia, Liberia'}
+                          </span>
+                          <span className="d-flex align-items-center justify-content-center justify-content-md-start">
+                            <FiCalendar className="text-rust me-2" size={16}/> Member since {memberSince}
+                          </span>
+                      </div>
+                  </div>
              </div>
              
-             <div className="mt-4 mt-md-0 z-1">
-                 <button className="btn btn-rust text-white rounded-pill px-4 py-2 fw-bold shadow-sm">Edit Profile</button>
+             <div className="mt-4 mt-md-0">
+                 <Link href="/profile/edit" className="btn btn-rust text-white rounded-pill px-4 py-2 fw-bold shadow-sm transition-all hover-scale">
+                   Edit Profile
+                 </Link>
              </div>
-         </div>
+         </section>
 
-         {/* 2-Column Split Layout */}
          <div className="row g-5">
-            {/* Left Column */}
+            {/* Main Content Area */}
             <div className="col-12 col-xl-8">
                 
-                {/* Booking History */}
-                <div className="mb-5">
+                {/* Bookings Section */}
+                <section className="mb-5">
                     <div className="d-flex justify-content-between align-items-end mb-4 px-1">
                         <h3 className="fw-bold mb-0">Booking History</h3>
-                        <Link href="/bookings" className="text-rust fw-bold text-uppercase letter-spaced small cursor-pointer text-decoration-none" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>VIEW ALL</Link>
+                        <Link href="/bookings" className="text-rust fw-bold small letter-spaced text-decoration-none">VIEW ALL</Link>
                     </div>
 
                     <div className="d-flex flex-column gap-3">
-                        {/* Upcoming Component */}
-                        <div className="bg-white rounded-4 p-4 shadow-sm border position-relative d-flex align-items-center cursor-pointer" style={{ borderLeft: '4px solid var(--accent-rust)!important' }}>
-                           <div className="position-absolute top-0 bottom-0 start-0 bg-rust rounded-start" style={{ width: '4px' }}></div>
-                           <div className="rounded-3 overflow-hidden shadow-sm flex-shrink-0 me-4" style={{ width: '80px', height: '80px' }}>
-                               <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Luxe Haven Salon" className="w-100 h-100 object-fit-cover" />
-                           </div>
-                           <div className="flex-grow-1">
-                               <h5 className="fw-bold mb-1">Luxe Haven Salon</h5>
-                               <div className="text-muted small mb-1">Balayage & Styling</div>
-                               <div className="text-rust fw-bold small" style={{ fontSize: '0.75rem' }}>Tomorrow at 10:30 AM</div>
-                           </div>
-                           <div className="d-none d-sm-block">
-                               <div className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-uppercase shadow-none border-0" style={{ letterSpacing: '1px', fontSize: '0.65rem' }}>UPCOMING</div>
-                           </div>
-                        </div>
-
-                        {/* Completed Component */}
-                        <div className="bg-white rounded-4 p-4 shadow-sm border border-opacity-10 d-flex align-items-center cursor-pointer">
-                           <div className="rounded-3 overflow-hidden flex-shrink-0 me-4 bg-secondary" style={{ width: '80px', height: '80px' }}>
-                               <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Velvet Rose Beauty" className="w-100 h-100 object-fit-cover grayscale" style={{ filter: 'grayscale(30%)' }} />
-                           </div>
-                           <div className="flex-grow-1">
-                               <h5 className="fw-bold mb-1">Velvet Rose Beauty</h5>
-                               <div className="text-muted small mb-1">HydraFacial</div>
-                               <div className="text-muted small" style={{ fontSize: '0.75rem' }}>Dec 12, 2023</div>
-                           </div>
-                           <div className="d-none d-sm-flex align-items-center">
-                               <div className="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold text-uppercase d-flex align-items-center gap-2" style={{ letterSpacing: '1px', fontSize: '0.65rem' }}>
-                                   <div className="rounded-circle bg-success d-flex align-items-center justify-content-center" style={{ width: '12px', height: '12px' }}><FiCheck size={8} className="text-white" /></div> COMPLETED
+                        {isLoading ? (
+                          <div className="text-center py-5"><div className="spinner-border text-rust" /></div>
+                        ) : bookings.length > 0 ? (
+                          bookings.map((booking) => (
+                            <div key={booking.id} className="bg-white rounded-4 p-4 shadow-sm border d-flex align-items-center transition-all hover-scale" style={{ borderLeft: `4px solid ${booking.status === 'CONFIRMED' ? '#9C4A34' : '#dee2e6'}!important` }}>
+                               <div className="rounded-3 overflow-hidden shadow-sm flex-shrink-0 me-4 bg-sand d-flex align-items-center justify-content-center border" style={{ width: '80px', height: '80px' }}>
+                                   {booking.salon_details?.image ? (
+                                     <img src={getImageUrl(booking.salon_details.image) || ''} alt="" className="w-100 h-100 object-fit-cover" />
+                                   ) : (
+                                     <FiShoppingBag className="text-muted opacity-25" size={32} />
+                                   )}
                                </div>
-                           </div>
-                        </div>
+                               <div className="flex-grow-1">
+                                   <h5 className="fw-bold mb-1">{booking.salon_details?.name}</h5>
+                                   <div className="text-muted small mb-1">{booking.service_details?.name}</div>
+                                   <div className="text-rust fw-bold small">{new Date(booking.date).toLocaleDateString()} at {booking.start_time}</div>
+                               </div>
+                               <div className="d-none d-sm-block">
+                                   <span className={`badge ${booking.status === 'CONFIRMED' ? 'bg-primary' : 'bg-secondary'} bg-opacity-10 ${booking.status === 'CONFIRMED' ? 'text-primary' : 'text-secondary'} px-3 py-2 rounded-pill fw-bold text-uppercase`} style={{ fontSize: '0.65rem' }}>
+                                     {booking.status}
+                                   </span>
+                               </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="bg-white rounded-4 p-5 text-center border border-dashed">
+                             <FiCalendar size={48} className="text-muted mb-3 opacity-25" />
+                             <h5 className="fw-bold">No bookings yet</h5>
+                             <p className="text-muted small mb-4">Start your transformation today by booking a service.</p>
+                             <Link href="/salons" className="btn btn-rust rounded-pill px-4">Explore Salons</Link>
+                          </div>
+                        )}
                     </div>
-                </div>
+                </section>
 
-                {/* Saved Salons */}
-                <div>
+                {/* Saved Salons Section */}
+                <section>
                      <div className="d-flex justify-content-between align-items-end mb-4 px-1">
                          <h3 className="fw-bold mb-0">Saved Salons</h3>
-                         <Link href="/favorites" className="text-rust fw-bold text-uppercase letter-spaced small cursor-pointer text-decoration-none" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>VIEW ALL</Link>
+                         <Link href="/favorites" className="text-rust fw-bold small letter-spaced text-decoration-none">VIEW ALL</Link>
                      </div>
                      
                      <div className="row g-4">
-                        {/* Salon 1 */}
-                        <div className="col-12 col-md-6">
-                            <div className="bg-white rounded-4 shadow-sm overflow-hidden border border-opacity-10 h-100 d-flex flex-column pb-3">
-                                <div className="position-relative" style={{ height: '220px' }}>
-                                    <img src="https://images.unsplash.com/photo-1516975080661-46bca198f26b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Azure Grooming" className="w-100 h-100 object-fit-cover" />
-                                    <div className="position-absolute top-0 end-0 p-3">
-                                        <div className="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm cursor-pointer" style={{ width: '36px', height: '36px' }}>
-                                            <FaHeart className="text-rust" size={16} />
+                        {isLoading ? (
+                          <div className="col-12 text-center py-4"><div className="spinner-border text-rust" /></div>
+                        ) : favorites.length > 0 ? (
+                          favorites.map((salon) => (
+                            <div key={salon.id} className="col-12 col-md-6">
+                                <div className="bg-white rounded-4 shadow-sm overflow-hidden border border-opacity-10 h-100 d-flex flex-column pb-3">
+                                    <div className="position-relative bg-sand d-flex align-items-center justify-content-center border-bottom" style={{ height: '200px' }}>
+                                        {salon.cover_image ? (
+                                          <img src={getImageUrl(salon.cover_image) || ''} alt={salon.name} className="w-100 h-100 object-fit-cover" />
+                                        ) : (
+                                          <FiMapPin size={48} className="text-muted opacity-25" />
+                                        )}
+                                        <div className="position-absolute top-0 end-0 p-3">
+                                            <div className="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm cursor-pointer" style={{ width: '36px', height: '36px' }}>
+                                                <FaHeart className="text-rust" size={16} />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="position-absolute bottom-0 start-0 p-3">
-                                        <div className="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold small text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.65rem' }}>FEATURED</div>
-                                    </div>
-                                </div>
-                                <div className="p-4 d-flex justify-content-between align-items-center flex-grow-1">
-                                    <div>
-                                        <h5 className="fw-bold mb-1">Azure Grooming</h5>
-                                        <div className="text-muted small d-flex align-items-center">
-                                            <FaStar className="text-dark me-1" size={12} /> <span className="fw-bold text-dark me-1">4.9</span> (128 reviews)
+                                    <div className="p-4 d-flex justify-content-between align-items-center flex-grow-1">
+                                        <div>
+                                            <h5 className="fw-bold mb-1">{salon.name}</h5>
+                                            <div className="text-muted small d-flex align-items-center">
+                                                <FaStar className="text-dark me-1" size={12} /> 
+                                                <span className="fw-bold text-dark me-1">{salon.rating || '4.8'}</span> 
+                                                ({salon.reviews_count || '0'} reviews)
+                                            </div>
                                         </div>
+                                        <Link href={`/salons/${salon.id}`} className="btn btn-light bg-sand text-rust fw-bold rounded-pill px-4 shadow-sm border-0 small">View</Link>
                                     </div>
-                                    <button className="btn btn-light bg-sand text-rust fw-bold rounded-pill px-4 shadow-sm border-0 small" style={{ fontSize: '0.85rem' }}>Quick Book</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Salon 2 */}
-                        <div className="col-12 col-md-6">
-                            <div className="bg-white rounded-4 shadow-sm overflow-hidden border border-opacity-10 h-100 d-flex flex-column pb-3">
-                                <div className="position-relative bg-dark" style={{ height: '220px' }}>
-                                    <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="The Gloss Bar" className="w-100 h-100 object-fit-cover opacity-75" />
-                                    <div className="position-absolute top-0 end-0 p-3">
-                                        <div className="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm cursor-pointer" style={{ width: '36px', height: '36px' }}>
-                                            <FaHeart className="text-rust" size={16} />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-4 d-flex justify-content-between align-items-center flex-grow-1">
-                                    <div>
-                                        <h5 className="fw-bold mb-1">The Gloss Bar</h5>
-                                        <div className="text-muted small d-flex align-items-center">
-                                            <FaStar className="text-dark me-1" size={12} /> <span className="fw-bold text-dark me-1">4.7</span> (84 reviews)
-                                        </div>
-                                    </div>
-                                    <button className="btn btn-light bg-sand text-rust fw-bold rounded-pill px-4 shadow-sm border-0 small" style={{ fontSize: '0.85rem' }}>Quick Book</button>
                                 </div>
                             </div>
-                        </div>
-
+                          ))
+                        ) : (
+                          <div className="col-12 text-center py-5 opacity-50 bg-white rounded-4 border border-dashed">
+                             <FiHeart size={48} className="mb-2" />
+                             <div className="fw-medium">No saved salons yet</div>
+                          </div>
+                        )}
                      </div>
-                </div>
-
+                </section>
             </div>
 
-            {/* Right Column: Settings & Reviews */}
-            <div className="col-12 col-xl-4">
-                
-                {/* Account Settings Tab list */}
+            {/* Sidebar Column */}
+            <aside className="col-12 col-xl-4">
                 <div className="rounded-4 p-4 p-md-5 mb-5 shadow-sm border border-secondary border-opacity-10" style={{ backgroundColor: '#EBE7DF' }}>
                     <h4 className="fw-bold mb-4">Account Settings</h4>
-                    <div className="d-flex flex-column gap-1">
+                    <nav className="d-flex flex-column gap-1">
+                        <SettingsLink href="/profile/edit" icon={<FiUser />} label="Edit Profile" />
+                        <SettingsLink href="/profile/payments" icon={<FiCreditCard />} label="Payment Methods" />
+                        <SettingsLink href="/profile/notifications" icon={<FiBell />} label="Notifications" />
+                        <SettingsLink href="/profile/privacy" icon={<FiShield />} label="Privacy & Safety" />
                         
-                        <div className="d-flex align-items-center justify-content-between py-3 cursor-pointer border-bottom border-secondary border-opacity-10">
-                            <div className="d-flex align-items-center gap-3 text-dark fw-medium">
-                                <FiUser className="text-rust opacity-75" size={18} />
-                                Edit Profile
-                            </div>
-                            <FiChevronRight className="text-muted" />
-                        </div>
-
-                        <div className="d-flex align-items-center justify-content-between py-3 cursor-pointer border-bottom border-secondary border-opacity-10">
-                            <div className="d-flex align-items-center gap-3 text-dark fw-medium">
-                                <FiCreditCard className="text-rust opacity-75" size={18} />
-                                Payment Methods
-                            </div>
-                            <FiChevronRight className="text-muted" />
-                        </div>
-
-                        <div className="d-flex align-items-center justify-content-between py-3 cursor-pointer border-bottom border-secondary border-opacity-10">
-                            <div className="d-flex align-items-center gap-3 text-dark fw-medium">
-                                <FiBell className="text-rust opacity-75" size={18} />
-                                Notifications
-                            </div>
-                            <FiChevronRight className="text-muted" />
-                        </div>
-
-                        <div className="d-flex align-items-center justify-content-between py-3 cursor-pointer border-bottom border-secondary border-opacity-10 mb-2">
-                            <div className="d-flex align-items-center gap-3 text-dark fw-medium">
-                                <FiShield className="text-rust opacity-75" size={18} />
-                                Privacy & Safety
-                            </div>
-                            <FiChevronRight className="text-muted" />
-                        </div>
-
-                        <div className="d-flex align-items-center gap-3 py-3 mt-3 cursor-pointer text-danger fw-bold transition-all">
+                        <button 
+                          onClick={handleSignOut}
+                          className="btn btn-link d-flex align-items-center gap-3 py-3 mt-3 text-danger fw-bold text-decoration-none transition-all p-0"
+                        >
                             <FiLogOut size={18} /> Sign Out
-                        </div>
-
-                    </div>
+                        </button>
+                    </nav>
                 </div>
 
-                {/* My Reviews Feed */}
-                <div className="bg-white rounded-4 p-4 p-md-5 shadow-sm border border-opacity-10">
+                <section className="bg-white rounded-4 p-4 p-md-5 shadow-sm border border-opacity-10">
                     <h4 className="fw-bold mb-4">My Reviews</h4>
-                    
                     <div className="d-flex flex-column gap-4">
-                        {/* Feed Item */}
-                        <div className="border-bottom pb-4">
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="fw-bold text-dark small">Luxe Haven Salon</span>
-                                <div className="d-flex text-rust" style={{ gap: '2px' }}>
-                                    {[1,2,3,4,5].map(star => <FaStar key={star} size={10} style={{ fill: 'var(--accent-rust)' }} />)}
+                        {isLoading ? (
+                          <div className="text-center py-4"><div className="spinner-border spinner-border-sm text-rust" /></div>
+                        ) : reviews.length > 0 ? (
+                          reviews.map((review) => (
+                            <div key={review.id} className="border-bottom pb-4 last-child-border-0">
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <span className="fw-bold text-dark small">{review.salon_details?.name}</span>
+                                    <div className="d-flex text-rust" style={{ gap: '2px' }}>
+                                        {[1,2,3,4,5].map(star => (
+                                          <FaStar 
+                                            key={star} 
+                                            size={10} 
+                                            style={{ fill: star <= review.rating ? '#9C4A34' : '#dee2e6' }} 
+                                          />
+                                        ))}
+                                    </div>
                                 </div>
+                                <p className="text-muted small fst-italic lh-base mb-0">"{review.comment}"</p>
                             </div>
-                            <p className="text-muted small fst-italic lh-base">"Absolutely loved my balayage! The attention to detail was incredible. Definitely coming back."</p>
-                            <div className="d-flex gap-2">
-                                <div className="rounded-2 overflow-hidden bg-secondary" style={{ width: '40px', height: '40px' }}>
-                                    <img src="https://images.unsplash.com/photo-1620052230113-176f184715f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Hair" className="w-100 h-100 object-fit-cover"/>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Feed Item */}
-                        <div>
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="fw-bold text-dark small">Nail Artistry Hub</span>
-                                <div className="d-flex text-rust" style={{ gap: '2px' }}>
-                                    {[1,2,3,4,5].map(star => <FaStar key={star} size={10} style={{ fill: 'var(--accent-rust)' }} />)}
-                                </div>
-                            </div>
-                            <p className="text-muted small fst-italic lh-base mb-0">"Fast service and very clean. My gel manicure lasted 3 weeks without chipping."</p>
-                        </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-4 opacity-50">
+                            <FiStar size={32} className="mb-2" />
+                            <div className="small fw-medium">No reviews yet</div>
+                          </div>
+                        )}
                     </div>
-                </div>
-
-            </div>
+                </section>
+            </aside>
          </div>
       </main>
 
+      <style jsx>{`
+        .bg-sand { background-color: #FDFBF7; }
+        .text-rust { color: #9C4A34; }
+        .btn-rust { background-color: #9C4A34; }
+        .letter-spaced { letter-spacing: 1px; }
+        .transition-all { transition: all 0.3s ease; }
+        .hover-scale:hover { transform: scale(1.02); }
+        .last-child-border-0:last-child { border-bottom: 0 !important; }
+      `}</style>
     </div>
+  );
+}
+
+function SettingsLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link href={href} className="d-flex align-items-center justify-content-between py-3 border-bottom border-secondary border-opacity-10 text-decoration-none text-dark fw-medium transition-all hover-scale">
+      <div className="d-flex align-items-center gap-3">
+        <span className="text-rust opacity-75">{icon}</span>
+        {label}
+      </div>
+      <FiChevronRight className="text-muted" />
+    </Link>
   );
 }

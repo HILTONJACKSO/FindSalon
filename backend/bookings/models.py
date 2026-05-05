@@ -13,10 +13,10 @@ class Booking(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='bookings')
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    date = models.DateField()
+    services = models.ManyToManyField(Service, related_name='bookings')
+    date = models.DateField(db_index=True)
     start_time = models.TimeField()
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -25,4 +25,11 @@ class Booking(models.Model):
         pass
 
     def __str__(self):
-        return f"{self.user.email} - {self.service.name} at {self.salon.name}"
+        try:
+            user_email = self.user.email if self.user else "Unknown User"
+            salon_name = self.salon.name if self.salon else "Unknown Salon"
+            # Avoid hitting DB in __str__ if possible, but if needed, be safe
+            return f"Booking {self.id}: {user_email} at {salon_name}"
+        except:
+            return f"Booking {self.id}"
+

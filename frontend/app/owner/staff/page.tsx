@@ -10,60 +10,113 @@ import {
     FiCheckCircle, 
     FiTarget,
     FiDownload,
-    FiShare2
+    FiShare2,
+    FiTrash2, 
+    FiLayers,
+    FiChevronRight,
+    FiX,
+    FiArrowRight
 } from 'react-icons/fi';
 import OwnerHeader from '@/components/owner/OwnerHeader';
+import { api } from '@/lib/api';
 
 export default function StaffManagementPage() {
+  const [stats, setStats] = React.useState<any>(null);
+  const [staff, setStaff] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [showAddModal, setShowAddModal] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    first_name: '', last_name: '', email: '', job_title: '', availability: 'OFF_SHIFT'
+  });
+  const [submitting, setSubmitting] = React.useState(false);
+  const [showAssignModal, setShowAssignModal] = React.useState(false);
+  const [selectedStaff, setSelectedStaff] = React.useState<any>(null);
+  const [allServices, setAllServices] = React.useState<any[]>([]);
+  const [savingAssignment, setSavingAssignment] = React.useState(false);
+
+  const fetchStats = React.useCallback(async () => {
+    try {
+      const response = await api.get('/staff/stats/');
+      setStats(response.data);
+    } catch (error) {
+      console.error("Error fetching staff stats", error);
+    }
+  }, []);
+
+  const fetchStaff = React.useCallback(async () => {
+    try {
+      const response = await api.get('/staff/');
+      setStaff(response.data.results || response.data);
+    } catch (error) {
+      console.error("Error fetching staff", error);
+    }
+  }, []);
+
+  const fetchServices = React.useCallback(async () => {
+    try {
+      const response = await api.get('/services/');
+      setAllServices(response.data.results || response.data);
+    } catch (error) {
+      console.error("Error fetching services", error);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      await Promise.all([fetchStats(), fetchStaff(), fetchServices()]);
+      setLoading(false);
+    };
+    init();
+
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchStaff();
+    }, 30000); // 30 seconds to avoid 429
+
+    return () => clearInterval(interval);
+  }, [fetchStats, fetchStaff, fetchServices]);
+
   const teamMetrics = [
-    { label: 'Total Members', value: '18', icon: <FiUsers />, color: '#9C4A34' },
-    { label: 'On Duty Today', value: '12', icon: <FiCalendar />, color: '#0066CC' },
-    { label: 'Performance Avg', value: '4.8', icon: <FiStar />, color: '#D4A017' },
-    { label: 'New Hires (Month)', value: '03', icon: <FiUserPlus />, color: '#5D6B35' },
+    { label: 'Total Members', value: stats?.total_members || '0', icon: <FiUsers />, color: '#9C4A34' },
+    { label: 'On Duty Today', value: stats?.on_duty_today || '0', icon: <FiCalendar />, color: '#0066CC' },
+    { label: 'Performance Avg', value: stats?.performance_avg || '0.0', icon: <FiStar />, color: '#D4A017' },
+    { label: 'New Hires (Month)', value: stats?.new_hires_month?.toString().padStart(2, '0') || '00', icon: <FiUserPlus />, color: '#5D6B35' },
   ];
 
-  const staff = [
-    {
-        id: 1,
-        name: 'Elena Vance',
-        role: 'Master Stylist',
-        status: 'On Duty',
-        statusColor: 'success',
-        skills: { cutting: 95, coloring: 98, styling: 92 },
-        services: ['Balayage', 'Luxe Cut', 'Signature Color'],
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
-    },
-    {
-        id: 2,
-        name: 'Marcus Thorne',
-        role: 'Senior Barber',
-        status: 'On Break',
-        statusColor: 'warning',
-        skills: { cutting: 98, coloring: 40, styling: 85 },
-        services: ['Executive Cut', 'Beard Sculpt', 'Hot Towel Shave'],
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
-    },
-    {
-        id: 3,
-        name: 'Sarah Chen',
-        role: 'Skin Specialist',
-        status: 'Off Shift',
-        statusColor: 'secondary',
-        skills: { cutting: 0, coloring: 0, styling: 95 },
-        services: ['HydraFacial', 'Deep Scalp', 'Stone Therapy'],
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
-    },
-    {
-        id: 4,
-        name: 'Sophia Rossi',
-        role: 'Junior Stylist',
-        status: 'On Duty',
-        statusColor: 'success',
-        skills: { cutting: 75, coloring: 82, styling: 88 },
-        services: ['Blowouts', 'Standard Cut', 'Basic Color'],
-        avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
+  const getStatusColor = (status: string) => {
+    switch (status) {
+        case 'ON_DUTY': return 'success';
+        case 'ON_BREAK': return 'warning';
+        case 'OFF_SHIFT': return 'secondary';
+        default: return 'secondary';
     }
-  ];
+  };
+
+  const getStatusLabel = (status: string) => {
+    return status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await api.post('/staff/', formData);
+      setShowAddModal(false);
+      setFormData({ first_name: '', last_name: '', email: '', job_title: '', availability: 'OFF_SHIFT' });
+      fetchStaff();
+      fetchStats();
+    } catch (error) {
+      console.error("Error adding staff member", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="pb-5">
@@ -86,7 +139,10 @@ export default function StaffManagementPage() {
                 <button className="btn btn-white rounded-pill px-4 py-3 fw-bold shadow-sm border border-opacity-10 text-muted d-flex align-items-center gap-2">
                     <FiDownload /> Payroll
                 </button>
-                <button className="btn btn-rust rounded-pill px-4 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                <button 
+                    onClick={() => setShowAddModal(true)}
+                    className="btn btn-rust rounded-pill px-4 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+                >
                     <FiUserPlus size={20} /> Add Member
                 </button>
             </div>
@@ -128,42 +184,51 @@ export default function StaffManagementPage() {
                 <tr key={member.id} className="cursor-pointer transition-all">
                   <td className="px-5 py-4 border-bottom border-light">
                     <div className="d-flex align-items-center gap-3">
-                      <div className="rounded-circle overflow-hidden shadow-sm" style={{ width: '48px', height: '48px' }}>
-                        <img src={member.avatar} alt={member.name} className="w-100 h-100 object-fit-cover" />
+                      <div className="rounded-circle overflow-hidden shadow-sm bg-sand d-flex align-items-center justify-content-center fw-bold text-rust" style={{ width: '48px', height: '48px' }}>
+                        {member.avatar ? <img src={member.avatar} alt={member.full_name} className="w-100 h-100 object-fit-cover" /> : member.full_name[0]}
                       </div>
                       <div>
-                        <div className="fw-bold text-dark">{member.name}</div>
-                        <div className="text-muted small" style={{ fontSize: '0.75rem' }}>{member.role}</div>
+                        <div className="fw-bold text-dark">{member.full_name}</div>
+                        <div className="text-muted small" style={{ fontSize: '0.75rem' }}>{member.job_title}</div>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 border-bottom border-light">
-                    <span className={`badge rounded-pill px-3 py-2 fw-bold text-capitalize bg-${member.statusColor} bg-opacity-10 text-${member.statusColor}`} style={{ fontSize: '0.65rem' }}>
-                        <span className={`rounded-circle me-2 d-inline-block bg-${member.statusColor}`} style={{ width: '6px', height: '6px' }}></span>
-                        {member.status}
+                    <span className={`badge rounded-pill px-3 py-2 fw-bold text-capitalize bg-${getStatusColor(member.availability)} bg-opacity-10 text-${getStatusColor(member.availability)}`} style={{ fontSize: '0.65rem' }}>
+                        <span className={`rounded-circle me-2 d-inline-block bg-${getStatusColor(member.availability)}`} style={{ width: '6px', height: '6px' }}></span>
+                        {getStatusLabel(member.availability)}
                     </span>
                   </td>
                   <td className="py-4 border-bottom border-light" style={{ width: '220px' }}>
                     <div className="d-flex flex-column gap-2">
                         <div className="d-flex justify-content-between align-items-center">
                             <span className="tiny fw-bold text-muted opacity-50">Overall Rating</span>
-                            <span className="tiny fw-bold text-rust">4.8/5</span>
+                            <span className="tiny fw-bold text-rust">{member.performance_rating}/5</span>
                         </div>
                         <div className="progress rounded-pill" style={{ height: '6px', backgroundColor: '#F0F0F0' }}>
-                            <div className="progress-bar rounded-pill bg-rust" style={{ width: '92%' }}></div>
+                            <div className="progress-bar rounded-pill bg-rust" style={{ width: `${(member.performance_rating / 5) * 100}%` }}></div>
                         </div>
                     </div>
                   </td>
                   <td className="py-4 border-bottom border-light">
                     <div className="d-flex flex-wrap gap-2">
-                        {member.services.map((svc, i) => (
-                            <span key={i} className="badge bg-sand text-dark border border-opacity-10 rounded-pill px-3 py-2 fw-medium" style={{ fontSize: '0.6rem' }}>{svc}</span>
-                        ))}
+                        {member.assigned_services_data?.length > 0 ? member.assigned_services_data.map((svc: any, i: number) => (
+                            <span key={i} className="badge bg-sand text-dark border border-opacity-10 rounded-pill px-3 py-2 fw-medium" style={{ fontSize: '0.6rem' }}>{svc.name}</span>
+                        )) : <span className="text-muted small italic">No services</span>}
                     </div>
                   </td>
                   <td className="py-4 border-bottom border-light text-end px-5">
                     <div className="d-flex justify-content-end gap-2">
-                        <button className="btn btn-light rounded-pill px-3 py-1 fw-bold small border-0 bg-transparent text-muted">View Schedule</button>
+                        <button 
+                            onClick={() => {
+                                setSelectedStaff(member);
+                                setShowAssignModal(true);
+                            }}
+                            className="btn btn-rust-outline rounded-pill px-3 py-2 fw-bold small transition-all hover-rust"
+                            style={{ fontSize: '0.75rem' }}
+                        >
+                            Assign Services
+                        </button>
                         <button className="btn btn-light rounded-circle p-2 border-0 bg-transparent text-muted"><FiMoreHorizontal size={20} /></button>
                     </div>
                   </td>
@@ -175,44 +240,136 @@ export default function StaffManagementPage() {
         
         {/* Pagination placeholder */}
         <div className="px-5 py-4 bg-sand bg-opacity-30 d-flex justify-content-between align-items-center border-top">
-          <span className="text-muted small fw-bold">SHOWING {staff.length} OF 18 TEAM MEMBERS</span>
+          <span className="text-muted small fw-bold">SHOWING {staff.length} OF {stats?.total_members || 0} TEAM MEMBERS</span>
           <div className="d-flex gap-2 text-muted tiny fw-bold cursor-pointer hover-rust">
              Shift Handover Logs <FiArrowRight className="ms-2" />
           </div>
         </div>
       </div>
 
-      {/* TEAM INTERACTION TILES */}
-      <div className="row g-4">
-        <div className="col-12 col-xl-6">
-            <div className="bg-white rounded-5 p-5 shadow-sm border border-opacity-10 d-flex align-items-center justify-content-between hover-scale transition-all cursor-pointer">
-                <div className="d-flex align-items-center gap-4">
-                     <div className="bg-blue bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center text-blue" style={{ width: '60px', height: '60px', color: '#0066CC' }}>
-                        <FiCheckCircle size={24} />
-                     </div>
-                     <div>
-                        <h5 className="fw-bold mb-1">Shift Verification</h5>
-                        <p className="text-muted small mb-0">Review today's check-ins and break times.</p>
-                     </div>
+
+      {/* ADD MEMBER MODAL */}
+      {showAddModal && (
+        <div className="position-fixed inset-0 z-5 d-flex align-items-center justify-content-center p-4" style={{ backgroundColor: 'rgba(30, 25, 21, 0.8)', backdropFilter: 'blur(10px)', zIndex: 9999 }}>
+            <div className="bg-white rounded-5 w-100 shadow-lg overflow-hidden animate-fade-in" style={{ maxWidth: '500px' }}>
+                <div className="p-5 position-relative">
+                    <button 
+                        onClick={() => setShowAddModal(false)} 
+                        className="btn btn-light rounded-circle position-absolute border-0 d-flex align-items-center justify-content-center p-2" 
+                        style={{ top: '24px', right: '24px', width: '40px', height: '40px', transition: 'all 0.3s ease' }}
+                    >
+                        <FiX size={20} style={{ transform: 'rotate(0deg)' }} />
+                    </button>
+
+                    <h2 className="fw-bold mb-4" style={{ letterSpacing: '-1px' }}>New Team Member</h2>
+                    
+                    <div className="custom-scrollbar pe-2" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                        <form onSubmit={handleAddMember}>
+                            <div className="row g-3 m-0">
+                                <div className="col-6">
+                                    <label className="form-label small fw-bold text-muted letter-spaced tiny">FIRST NAME</label>
+                                    <input type="text" name="first_name" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" required value={formData.first_name} onChange={handleInputChange} />
+                                </div>
+                                <div className="col-6">
+                                    <label className="form-label small fw-bold text-muted letter-spaced tiny">LAST NAME</label>
+                                    <input type="text" name="last_name" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" required value={formData.last_name} onChange={handleInputChange} />
+                                </div>
+                                <div className="col-12">
+                                    <label className="form-label small fw-bold text-muted letter-spaced tiny">EMAIL ADDRESS</label>
+                                    <input type="email" name="email" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" required value={formData.email} onChange={handleInputChange} />
+                                </div>
+                                <div className="col-12">
+                                    <label className="form-label small fw-bold text-muted letter-spaced tiny">JOB TITLE</label>
+                                    <input type="text" name="job_title" className="form-control rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" placeholder="e.g. Master Stylist" required value={formData.job_title} onChange={handleInputChange} />
+                                </div>
+                                <div className="col-12">
+                                    <label className="form-label small fw-bold text-muted letter-spaced tiny">INITIAL STATUS</label>
+                                    <select name="availability" className="form-select rounded-pill border-0 bg-sand p-3 shadow-none fw-bold" value={formData.availability} onChange={handleInputChange}>
+                                        <option value="OFF_SHIFT">Off Shift</option>
+                                        <option value="ON_DUTY">On Duty</option>
+                                        <option value="ON_BREAK">On Break</option>
+                                    </select>
+                                </div>
+                                <div className="col-12 mt-5">
+                                    <button type="submit" className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm transition-all hover-scale" disabled={submitting}>
+                                        {submitting ? 'Adding Member...' : 'Add to Team'}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div className="text-muted opacity-25"><FiChevronRight size={24} /></div>
             </div>
         </div>
-        <div className="col-12 col-xl-6">
-            <div className="bg-white rounded-5 p-5 shadow-sm border border-opacity-10 d-flex align-items-center justify-content-between hover-scale transition-all cursor-pointer">
-                <div className="d-flex align-items-center gap-4">
-                     <div className="bg-rust bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center text-rust" style={{ width: '60px', height: '60px' }}>
-                        <FiTarget size={24} />
-                     </div>
-                     <div>
-                        <h5 className="fw-bold mb-1">Incentive Tracking</h5>
-                        <p className="text-muted small mb-0">Commission calculations for current week.</p>
-                     </div>
+      )}
+
+      {/* ASSIGN SERVICES MODAL */}
+      {showAssignModal && selectedStaff && (
+        <div className="position-fixed inset-0 z-5 d-flex align-items-center justify-content-center p-4" style={{ backgroundColor: 'rgba(30, 25, 21, 0.8)', backdropFilter: 'blur(10px)', zIndex: 10000 }}>
+            <div className="bg-white rounded-5 w-100 shadow-lg overflow-hidden animate-fade-in" style={{ maxWidth: '600px' }}>
+                <div className="p-5 position-relative">
+                    <div className="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 className="fw-bold mb-1" style={{ letterSpacing: '-1px' }}>Assign Services</h2>
+                            <p className="text-muted small mb-0">Select the treatments <span className="fw-bold text-dark">{selectedStaff.full_name}</span> is qualified to perform.</p>
+                        </div>
+                        <button onClick={() => setShowAssignModal(false)} className="btn btn-light rounded-circle p-2 border-0">
+                            <FiX size={24} />
+                        </button>
+                    </div>
+
+                    <div className="custom-scrollbar mb-4 pe-2" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                        <div className="row g-3 m-0">
+                            {allServices.map(svc => {
+                                const isAssigned = selectedStaff.assigned_services?.includes(svc.id);
+                                return (
+                                    <div key={svc.id} className="col-12 p-0">
+                                        <div 
+                                            onClick={async () => {
+                                                const newServices = isAssigned 
+                                                    ? selectedStaff.assigned_services.filter((id: number) => id !== svc.id)
+                                                    : [...(selectedStaff.assigned_services || []), svc.id];
+                                                
+                                                // Optimistic update
+                                                const updatedStaff = { ...selectedStaff, assigned_services: newServices };
+                                                setSelectedStaff(updatedStaff);
+                                                setStaff(staff.map(s => s.id === selectedStaff.id ? { ...s, assigned_services: newServices, assigned_services_data: allServices.filter(as => newServices.includes(as.id)) } : s));
+
+                                                try {
+                                                    await api.patch(`/staff/${selectedStaff.id}/`, { assigned_services: newServices });
+                                                } catch (error) {
+                                                    console.error("Failed to update services", error);
+                                                }
+                                            }}
+                                            className={`p-3 rounded-4 border-2 transition-all cursor-pointer d-flex align-items-center justify-content-between ${isAssigned ? 'border-rust bg-sand' : 'border-light bg-light opacity-75'}`}
+                                        >
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div className="rounded-3 overflow-hidden bg-white" style={{ width: '40px', height: '40px' }}>
+                                                    <img src={svc.image || 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80'} className="w-100 h-100 object-fit-cover" alt="" />
+                                                </div>
+                                                <div>
+                                                    <div className="fw-bold small">{svc.name}</div>
+                                                    <div className="text-muted tiny">{svc.duration} MIN • ${svc.price}</div>
+                                                </div>
+                                            </div>
+                                            {isAssigned && <FiCheckCircle className="text-rust" size={20} />}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={() => setShowAssignModal(false)}
+                        className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm transition-all hover-scale"
+                    >
+                        Save & Close
+                    </button>
                 </div>
-                <div className="text-muted opacity-25"><FiChevronRight size={24} /></div>
             </div>
         </div>
-      </div>
+      )}
 
       <style jsx>{`
         .bg-sand { background-color: #FDFBF7; }
@@ -223,25 +380,32 @@ export default function StaffManagementPage() {
         .transition-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .hover-scale:hover { transform: translateY(-5px); }
         .hover-rust:hover { color: #9C4A34 !important; }
+        .btn-rust-outline { 
+            background: transparent; 
+            border: 2px solid #9C4A34; 
+            color: #9C4A34; 
+        }
+        .btn-rust-outline:hover {
+            background: #9C4A34;
+            color: white;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #FDFBF7;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #E5E0D5;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #9C4A34;
+        }
       `}</style>
     </div>
   );
 }
 
-// Internal reusable Icon fix
-function FiArrowRight({ className }: { className?: string }) {
-    return (
-        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
-    );
-}
-
-function FiChevronRight({ size, className }: { size?: number, className?: string }) {
-    return (
-        <svg className={className} width={size || 16} height={size || 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-    );
-}

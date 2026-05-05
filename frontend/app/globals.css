@@ -1,27 +1,33 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --bg-sand: #fdfaf5;
-  --accent-rust: #BE5B21;
-  --accent-rust-hover: #A04A18;
-  --text-dark: #2A2522;
+  --accent-rust: #F26419;
+  --accent-rust-hover: #D85210;
+  --text-dark: #1E1915;
   --text-muted: #7A7067;
   --divider: #EBE5DB;
 }
+
 
 body {
   background-color: var(--bg-sand);
   color: var(--text-dark);
   font-family: var(--font-inter), sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .text-rust { color: var(--accent-rust); }
 .bg-rust { background-color: var(--accent-rust); }
-.bg-rust:hover { background-color: var(--accent-rust-hover); }
+.btn-rust { background-color: var(--accent-rust); color: white; }
 
 .font-serif-italic {
-  font-family: var(--font-playfair);
+  font-family: var(--font-playfair), serif;
   font-style: italic;
 }
 

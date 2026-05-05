@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
-import { FiMail, FiLock, FiStar } from 'react-icons/fi';
+import { FiMail, FiLock, FiStar, FiEye, FiEyeOff } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple } from 'react-icons/fa';
 
@@ -21,25 +23,96 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [keepSigned, setKeepSigned] = useState(true);
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
+  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
+
+  // Load saved credentials
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedEmail = localStorage.getItem('remember_email');
+      const savedPassword = localStorage.getItem('remember_password');
+      if (savedEmail) setValue('email', savedEmail);
+      if (savedPassword) setValue('password', savedPassword);
+    }
+  }, [setValue]);
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setError('');
-      const res = await api.post('/auth/login/', data);
-      const { access, refresh } = res.data;
-      const profileRes = await api.get('/auth/profile/', { headers: { Authorization: `Bearer ${access}` } });
-      setAuth(profileRes.data, access, refresh);
-      const role = profileRes.data.role;
-      if (role === 'OWNER') router.push('/owner/dashboard');
-      else if (role === 'ADMIN') router.push('/admin/dashboard');
-      else router.push('/dashboard');
+
+      // Save credentials if Keep Signed In is checked
+      if (keepSigned) {
+        localStorage.setItem('remember_email', data.email);
+        localStorage.setItem('remember_password', data.password);
+      } else {
+        localStorage.removeItem('remember_email');
+        localStorage.removeItem('remember_password');
+      }
+      let token: string;
+      let userProfile: any;
+
+      try {
+        // 0. Set Persistence based on keepSigned
+        await setPersistence(auth, keepSigned ? browserLocalPersistence : browserSessionPersistence);
+        
+        // 1. Try Firebase first (Standard User/Owner)
+        const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+        token = await userCredential.user.getIdToken();
+        
+        const profileRes = await api.get('auth/profile/', { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        userProfile = profileRes.data;
+      } catch (fbErr: any) {
+        console.log("Firebase login failed, trying traditional fallback...", fbErr.code);
+        
+        // 2. Try Traditional Backend Login (For Admin accounts created manually)
+        const loginRes = await api.post('auth/login/', {
+          email: data.email,
+          password: data.password
+        });
+        
+        token = loginRes.data.access;
+        // Fetch profile with the new JWT
+        const profileRes = await api.get('auth/profile/', { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        userProfile = profileRes.data;
+      }
+
+      setAuth(userProfile, token);
+      
+      // HYPER-SCALE REDIRECTION SECURITY
+      const role = userProfile.role;
+      const email = userProfile.email?.toLowerCase();
+      
+      if (role === 'ADMIN' || email?.includes('admin@') || email === 'jack@admin.com') {
+          console.log("Super Admin Access Granted. Routing to Command Center...");
+          router.push('/admin/dashboard');
+      } else if (role === 'OWNER') {
+          router.push('/owner/dashboard');
+      } else {
+          router.push('/profile');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Invalid email or password');
+
+      console.error("Login final error:", err);
+      setError('Invalid email or password. Please try again.');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError('Google sign in failed');
     }
   };
 
@@ -54,48 +127,41 @@ export default function LoginPage() {
           backgroundPosition: 'center'
         }}>
           <div className="position-relative" style={{ zIndex: 10, maxWidth: '400px' }}>
-            <h1 className="text-white fw-bold display-4 mb-0" style={{ letterSpacing: '-1px' }}>Define your</h1>
-            <h1 className="text-rust fw-bold display-4 mb-4" style={{ letterSpacing: '-1px' }}>aesthetic.</h1>
-            <p className="text-white-50 fs-5 mb-5 lh-base">
-              Experience the most premium salon curated network. Every touchpoint, every service, designed for your sophisticated lifestyle.
+            <h1 className="text-white fw-bold display-4 mb-0 font-serif-italic" style={{ letterSpacing: '-1.5px', lineHeight: '1.2' }}>Refine</h1>
+            <h1 className="text-rust fw-bold display-4 mb-4 font-serif-italic" style={{ letterSpacing: '-1.5px', lineHeight: '1.2' }}>Your Aura.</h1>
+            <p className="text-white-50 fs-5 mb-5 lh-base font-serif-italic opacity-75">
+              Experience the world's most premium salon curated network. Every touchpoint, every service, designed for your sophisticated lifestyle.
             </p>
             <div className="d-flex align-items-center">
-              <div className="d-flex me-3">
-                <img src="https://i.pravatar.cc/150?img=1" className="rounded-circle border border-2 border-dark" width="35" height="35" alt="Avatar 1" style={{ marginLeft: '-0px' }} />
-                <img src="https://i.pravatar.cc/150?img=2" className="rounded-circle border border-2 border-dark" width="35" height="35" alt="Avatar 2" style={{ marginLeft: '-10px' }} />
-                <img src="https://i.pravatar.cc/150?img=3" className="rounded-circle border border-2 border-dark" width="35" height="35" alt="Avatar 3" style={{ marginLeft: '-10px' }} />
+              <div className="bg-white bg-opacity-25 rounded-pill px-3 py-1 d-flex align-items-center gap-2 border border-white border-opacity-25">
+                 <div className="rounded-circle bg-success" style={{ width: '8px', height: '8px' }}></div>
+                 <span className="text-white small fw-bold" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>EXCLUSIVE MEMBER ACCESS</span>
               </div>
-              <span className="text-white small fw-medium">Join 50k+ curated members</span>
             </div>
           </div>
         </div>
 
         {/* RIGHT SIDE: Form */}
-        <div className="col-lg-7 d-flex flex-column justify-content-center align-items-center p-4 p-md-5 position-relative">
-          <div className="w-100" style={{ maxWidth: '450px' }}>
+        <div className="col-lg-7 d-flex flex-column justify-content-start align-items-center p-4 p-md-5 pt-lg-5 position-relative overflow-auto" style={{ maxHeight: '100vh' }}>
+          <div className="w-100 py-5" style={{ maxWidth: '450px' }}>
             
             {/* Logo area */}
-            <div className="mb-4 d-flex align-items-center">
-               <div className="bg-rust rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '40px', height: '40px', color: 'white' }}>
-                 <FiStar size={20} />
-               </div>
+            <div className="mb-5 d-flex align-items-center">
+               <img src="/logo.jpg" alt="FindSalon" className="rounded-circle shadow-lg" style={{ width: '60px', height: '60px', objectFit: 'cover' }} />
             </div>
 
-            <h2 className="fw-bold mb-2">Welcome to FindSalon</h2>
-            <p className="text-muted small mb-5">Please enter your details to sign in.</p>
+            <h2 className="fw-bold mb-2 font-serif-italic" style={{ fontSize: '2.5rem', letterSpacing: '-1.5px' }}>Welcome Back</h2>
+            <p className="text-muted small mb-5 lead">Sign in to your private sanctuary.</p>
 
             {/* OAuth Buttons */}
-            <div className="row g-2 mb-4">
-              <div className="col-12 col-sm-6">
-                <button type="button" className="btn btn-white border w-100 rounded-pill py-2 d-flex align-items-center justify-content-center fw-medium bg-white text-nowrap shadow-sm">
-                  <FcGoogle className="me-2 flex-shrink-0" size={20} /> <span className="text-dark">Google</span>
-                </button>
-              </div>
-              <div className="col-12 col-sm-6">
-                <button type="button" className="btn btn-dark w-100 rounded-pill py-2 d-flex align-items-center justify-content-center fw-medium text-nowrap shadow-sm">
-                  <FaApple className="me-2 flex-shrink-0 text-white" size={20} /> <span className="text-white">Apple</span>
-                </button>
-              </div>
+            <div className="mb-4">
+              <button 
+                type="button" 
+                onClick={handleGoogleSignIn}
+                className="btn btn-white border w-100 rounded-pill py-3 d-flex align-items-center justify-content-center fw-medium bg-white shadow-sm"
+              >
+                <FcGoogle className="me-2" size={20} /> <span className="text-dark">Sign In with Google</span>
+              </button>
             </div>
 
             <div className="d-flex align-items-center mb-4">
@@ -130,18 +196,31 @@ export default function LoginPage() {
                 <div className="position-relative">
                   <FiLock className="position-absolute text-muted" style={{ left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input 
-                    type="password" 
+                    type={showPassword ? "text" : "password"} 
                     placeholder="••••••••"
-                    className={`form-control rounded-pill py-2 ps-5 border-0 shadow-sm ${errors.password ? 'is-invalid' : ''}`}
+                    className={`form-control rounded-pill py-2 ps-5 pe-5 border-0 shadow-sm ${errors.password ? 'is-invalid' : ''}`}
                     style={{ backgroundColor: 'white' }}
                     {...register('password')}
                   />
+                  <div 
+                    className="position-absolute translate-middle-y text-muted cursor-pointer hover-rust" 
+                    style={{ top: '50%', right: '15px' }}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </div>
                   {errors.password && <div className="invalid-feedback ps-4">{errors.password.message}</div>}
                 </div>
               </div>
-
+ 
               <div className="mb-4 form-check d-flex align-items-center">
-                <input type="checkbox" className="form-check-input rounded-circle border-secondary shadow-none me-2 mt-0" id="keepSigned" />
+                <input 
+                  type="checkbox" 
+                  className="form-check-input rounded-circle border-secondary shadow-none me-2 mt-0" 
+                  id="keepSigned" 
+                  checked={keepSigned}
+                  onChange={(e) => setKeepSigned(e.target.checked)}
+                />
                 <label className="form-check-label text-muted small" htmlFor="keepSigned">Keep me signed in</label>
               </div>
 
@@ -157,15 +236,13 @@ export default function LoginPage() {
 
             <div className="text-center mt-5">
               <p className="text-muted small">
-                Don't have an account? <Link href="/register" className="text-rust fw-bold text-decoration-none">Sign Up</Link>
+                New to the collection? <Link href="/register" className="text-rust fw-bold text-decoration-none hover-rust">Request Access</Link>
               </p>
             </div>
 
           </div>
 
-          <div className="position-absolute bottom-0 w-100 text-center pb-4">
-            <span className="text-muted" style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '1px' }}>PRIVACY POLICY &nbsp;&nbsp;•&nbsp;&nbsp; TERMS OF SERVICE</span>
-          </div>
+
 
         </div>
       </div>

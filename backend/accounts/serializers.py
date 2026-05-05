@@ -29,7 +29,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'phone', 'role', 'first_name', 'last_name')
+        fields = ('id', 'email', 'phone', 'role', 'first_name', 'last_name', 'avatar', 'firebase_uid', 'date_joined', 'location')
         read_only_fields = ('id', 'role')
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -38,15 +38,46 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'phone', 'first_name', 'last_name', 'password', 'role')
+        fields = ('id', 'email', 'phone', 'first_name', 'last_name', 'password', 'role', 'firebase_uid')
 
     def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            phone=validated_data.get('phone', ''),
-            role=validated_data.get('role', User.Role.CUSTOMER)
-        )
-        return user
+        email = validated_data['email']
+        firebase_uid = validated_data.get('firebase_uid')
+        
+        try:
+            # Check if user already exists
+            user = User.objects.filter(email=email).first()
+            if user:
+                print(f"DEBUG: User with email {email} already exists. Linking firebase_uid.")
+                if not user.firebase_uid:
+                    user.firebase_uid = firebase_uid
+                
+                # Update other fields if provided
+                user.first_name = validated_data.get('first_name', user.first_name)
+                user.last_name = validated_data.get('last_name', user.last_name)
+                user.phone = validated_data.get('phone', user.phone)
+                user.role = validated_data.get('role', user.role)
+                
+                if validated_data.get('password'):
+                    user.set_password(validated_data['password'])
+                
+                user.save()
+                return user
+
+            # Otherwise create new
+            print(f"DEBUG: Creating new user with email {email}")
+            user = User.objects.create_user(
+                email=email,
+                password=validated_data['password'],
+                first_name=validated_data.get('first_name', ''),
+                last_name=validated_data.get('last_name', ''),
+                phone=validated_data.get('phone', ''),
+                role=validated_data.get('role', User.Role.CUSTOMER),
+                firebase_uid=firebase_uid
+            )
+            return user
+        except Exception as e:
+            print(f"DEBUG: Registration creation failed: {e}")
+            import traceback
+            print(traceback.format_exc())
+            raise serializers.ValidationError(str(e))

@@ -18,9 +18,14 @@ urlpatterns = [
     path('api/services/', include('services.urls')),
     path('api/inventory/', include('inventory.urls')),
     path('api/bookings/', include('bookings.urls')),
+    path('api/customers/', include('customers.urls')),
+    path('api/staff/', include('staff.urls')),
     path('api/reviews/', include('reviews.urls')),
     path('api/payments/', include('payments.urls')),
     path('api/analytics/', include('analytics.urls')),
+    path('api/deals/', include('deals.urls')),
+    path('api/notifications/', include('notifications.urls')),
+    path('api/ads/', include('ads.urls')),
 ]
 
 if settings.DEBUG:

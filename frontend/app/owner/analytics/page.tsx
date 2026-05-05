@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     FiTrendingUp, 
     FiBriefcase, 
@@ -14,21 +14,52 @@ import {
     FiActivity
 } from 'react-icons/fi';
 import OwnerHeader from '@/components/owner/OwnerHeader';
+import { api } from '@/lib/api';
 
 export default function AnalyticsPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await api.get('/analytics/');
+        setData(res.data);
+      } catch (err) {
+        console.error('Failed to fetch analytics', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="pb-5">
+        <OwnerHeader />
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+          <div className="spinner-border text-rust" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const kpis = [
-    { label: 'Net Revenue', value: '$48,240.00', growth: '+15.4%', icon: <FiTrendingUp />, color: '#9C4A34' },
-    { label: 'Average Ticket', value: '$142.50', growth: '+5.2%', icon: <FiBriefcase />, color: '#0066CC' },
-    { label: 'Occupancy Rate', value: '78.4%', growth: '+12.1%', icon: <FiActivity />, color: '#5D6B35' },
-    { label: 'Retention Rate', value: '64.2%', growth: '+2.4%', icon: <FiTarget />, color: '#D4A017' },
+    { label: 'Net Revenue', value: `$${data.net_revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, growth: '+0.0%', icon: <FiTrendingUp />, color: '#9C4A34' },
+    { label: 'Average Ticket', value: `$${data.average_ticket.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, growth: '+0.0%', icon: <FiBriefcase />, color: '#0066CC' },
+    { label: 'Occupancy Rate', value: `${data.occupancy_rate}%`, growth: '+0.0%', icon: <FiActivity />, color: '#5D6B35' },
+    { label: 'Retention Rate', value: `${data.retention_rate}%`, growth: '+0.0%', icon: <FiTarget />, color: '#D4A017' },
   ];
 
-  const categories = [
-    { name: 'Hair & Styling', value: 45, color: '#9C4A34' },
-    { name: 'Skin & Facial', value: 25, color: '#0066CC' },
-    { name: 'Nail Artistry', value: 20, color: '#D4A017' },
-    { name: 'Therapy & Massage', value: 10, color: '#5D6B35' },
-  ];
+  const categories = data.service_portfolio.map((c: any, i: number) => ({
+    name: c.name,
+    value: c.value,
+    color: ['#9C4A34', '#0066CC', '#D4A017', '#5D6B35', '#6c757d'][i % 5]
+  }));
+
 
   return (
     <div className="pb-5">
@@ -47,11 +78,20 @@ export default function AnalyticsPage() {
             <p className="text-muted mb-0">Harnessing performance data to drive salon excellence.</p>
         </div>
         <div className="col-12 col-md-4 text-md-end mt-4 mt-md-0">
-            <div className="d-flex gap-3 justify-content-md-end">
+            <div className="d-flex align-items-center gap-3 justify-content-md-end">
                 <div className="bg-white rounded-pill px-4 py-3 fw-bold shadow-sm border border-opacity-10 text-dark d-flex align-items-center gap-3 cursor-pointer">
-                    <FiCalendar className="text-rust" /> <span>Oct 1 - Oct 31, 2023</span> <FiChevronDown className="opacity-25" />
+                    <FiCalendar className="text-rust" /> 
+                    <span className="text-nowrap">
+                      {new Date(new Date().getFullYear(), new Date().getMonth(), 1).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span> 
+                    <FiChevronDown className="opacity-25" />
                 </div>
-                <button className="btn btn-rust rounded-circle p-3 shadow-sm d-flex align-items-center justify-content-center">
+                <button 
+                    onClick={() => window.print()}
+                    className="btn bg-rust text-white rounded-circle p-0 shadow-sm d-flex align-items-center justify-content-center border-0 hover-scale transition-all flex-shrink-0"
+                    style={{ width: '56px', height: '56px' }}
+                    title="Download Report"
+                >
                     <FiDownload size={22} />
                 </button>
             </div>
@@ -115,20 +155,33 @@ export default function AnalyticsPage() {
                         <g opacity="0.03">
                             {[70, 140, 210, 280].map(y => <line key={y} x1="0" y1={y} x2="800" y2={y} stroke="black" />)}
                         </g>
-                        {/* Shaded Area */}
-                        <path d="M0,300 Q100,280 200,220 T400,180 T600,120 T800,80 L800,350 L0,350 Z" fill="url(#revGrad)" />
-                        {/* Actual Line */}
-                        <path d="M0,300 Q100,280 200,220 T400,180 T600,120 T800,80" fill="none" stroke="#9C4A34" strokeWidth="4" strokeLinecap="round" />
-                        {/* Forecast Dots */}
-                        <path d="M600,120 L800,50" fill="none" stroke="#9C4A34" strokeWidth="2" strokeDasharray="8,8" opacity="0.4" />
-                        
-                        {/* Points */}
-                        {[0, 200, 400, 600, 800].map((x, i) => (
-                            <circle key={i} cx={x} cy={300 - i*55} r="5" fill="white" stroke="#9C4A34" strokeWidth="3" />
-                        ))}
+                        {/* Dynamic Path generation */}
+                        {(() => {
+                           const maxVal = Math.max(...data.trajectory.map((t:any) => t.actual), ...data.trajectory.map((t:any) => t.forecast), 100);
+                           const getY = (val:number) => 300 - (val / maxVal) * 250;
+                           const points = data.trajectory.map((t:any, i:number) => ({ x: i * 200, y: getY(t.actual) }));
+                           const pathD = `M${points.map((p:any) => `${p.x},${p.y}`).join(' L')}`;
+                           const areaD = `${pathD} L800,350 L0,350 Z`;
+
+                           const forecastPoints = data.trajectory.map((t:any, i:number) => ({ x: i * 200, y: getY(t.forecast) }));
+                           const forecastD = `M${forecastPoints.map((p:any) => `${p.x},${p.y}`).join(' L')}`;
+
+                           return (
+                              <>
+                                <path d={areaD} fill="url(#revGrad)" />
+                                <path d={pathD} fill="none" stroke="#9C4A34" strokeWidth="4" strokeLinecap="round" />
+                                <path d={forecastD} fill="none" stroke="#9C4A34" strokeWidth="2" strokeDasharray="8,8" opacity="0.4" />
+                                {points.map((p:any, i:number) => (
+                                    <circle key={i} cx={p.x} cy={p.y} r="5" fill="white" stroke="#9C4A34" strokeWidth="3" />
+                                ))}
+                              </>
+                           );
+                        })()}
                     </svg>
                     <div className="d-flex justify-content-between mt-4 text-muted tiny fw-bold px-4 letter-spaced">
-                        <span>WEEK 1</span><span>WEEK 2</span><span>WEEK 3</span><span>WEEK 4</span><span>CURRENT</span>
+                        {data.trajectory.map((t:any, i:number) => (
+                            <span key={i}>{t.label.toUpperCase()}</span>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -142,12 +195,19 @@ export default function AnalyticsPage() {
                 <div className="flex-grow-1 d-flex align-items-center justify-content-center position-relative mb-5">
                     <svg viewBox="0 0 200 200" width="220" height="220">
                         <circle cx="100" cy="100" r="80" fill="transparent" stroke="#F0F0F0" strokeWidth="25" />
-                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="#9C4A34" strokeWidth="25" strokeDasharray="502" strokeDashoffset="120" strokeLinecap="round" transform="rotate(-90 100 100)" />
-                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="#0066CC" strokeWidth="25" strokeDasharray="502" strokeDashoffset="420" strokeLinecap="round" transform="rotate(45 100 100)" />
+                        {categories.map((c:any, i:number) => {
+                             let prevOffset = 0;
+                             for(let j=0; j<i; j++) prevOffset += categories[j].value;
+                             const dashoffset = 502.6 * (1 - c.value / 100);
+                             const rotation = (prevOffset / 100) * 360 - 90;
+                             return (
+                                 <circle key={i} cx="100" cy="100" r="80" fill="transparent" stroke={c.color} strokeWidth="25" strokeDasharray="502.6" strokeDashoffset={dashoffset} strokeLinecap="round" transform={`rotate(${rotation} 100 100)`} />
+                             )
+                        })}
                     </svg>
                     <div className="position-absolute text-center">
                         <div className="text-muted tiny fw-bold letter-spaced">TOTAL</div>
-                        <div className="fw-bold fs-4">$48.2k</div>
+                        <div className="fw-bold fs-4">${data.net_revenue > 1000 ? (data.net_revenue / 1000).toFixed(1) + 'k' : data.net_revenue.toFixed(2)}</div>
                     </div>
                 </div>
 
@@ -189,8 +249,9 @@ export default function AnalyticsPage() {
                         <div key={day} className="d-flex align-items-center gap-1 mb-1">
                             <div className="tiny fw-bold text-muted opacity-50 pe-3" style={{ width: '40px' }}>{day}</div>
                             {[...Array(12)].map((_, i) => {
-                                // Deterministic intensity based on index to avoid hydration mismatch
-                                const intensity = ((idx * 7) + (i * 3)) % 10 / 10;
+                                const count = data.heatmap[idx]?.[i] || 0;
+                                const maxCount = Math.max(...data.heatmap.flat(), 1);
+                                const intensity = count / maxCount;
                                 return (
                                     <div 
                                         key={i} 
@@ -198,7 +259,7 @@ export default function AnalyticsPage() {
                                         style={{ 
                                             height: '35px', 
                                             backgroundColor: '#9C4A34', 
-                                            opacity: intensity > 0.8 ? 0.9 : intensity > 0.5 ? 0.4 : 0.05 
+                                            opacity: intensity > 0.8 ? 0.9 : intensity > 0.5 ? 0.4 : intensity > 0 ? 0.2 : 0.05 
                                         }}
                                     ></div>
                                 );

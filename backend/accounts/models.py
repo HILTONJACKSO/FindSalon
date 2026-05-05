@@ -27,12 +27,16 @@ class User(AbstractUser):
     class Role(models.TextChoices):
         CUSTOMER = 'CUSTOMER', 'Customer'
         OWNER = 'OWNER', 'Salon Owner'
+        STAFF = 'STAFF', 'Staff Member'
         ADMIN = 'ADMIN', 'Admin'
     
     username = None # Remove username field
     email = models.EmailField('email address', unique=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.CUSTOMER)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    location = models.CharField(max_length=255, default='Monrovia, Liberia')
+    firebase_uid = models.CharField(max_length=128, unique=True, blank=True, null=True)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

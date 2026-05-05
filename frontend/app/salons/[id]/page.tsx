@@ -1,56 +1,412 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FiShare2, FiHeart, FiStar, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiShare2, FiHeart, FiStar, FiChevronLeft, FiChevronRight, FiClock, FiMapPin, FiCheckCircle } from 'react-icons/fi';
+import { api, getImageUrl } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isToday, startOfToday, isBefore } from 'date-fns';
+import { usePopup } from '@/context/PopupContext';
+import { useLocation } from '@/hooks/useLocation';
+import { calculateDistance, formatDistance } from '@/lib/location';
+
 export default function SalonProfile() {
+  const { location: userLocation } = useLocation();
+  const { showPopup } = usePopup();
+  const { id } = useParams();
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const [salon, setSalon] = useState<any>(null);
+  const [services, setServices] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedServices, setSelectedServices] = useState<any[]>([]);
+  
+  // Booking State
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [showShareToast, setShowShareToast] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchData = async () => {
+      try {
+        const [salonRes, servicesRes, reviewsRes] = await Promise.all([
+          api.get(`/salons/${id}/`),
+          api.get(`/services/?salon=${id}`),
+          api.get(`/reviews/?salon=${id}`)
+        ]);
+
+        setSalon(salonRes.data);
+        setServices(servicesRes.data.results || servicesRes.data);
+        setReviews(reviewsRes.data.results || reviewsRes.data);
+        setIsFollowing(salonRes.data.is_following);
+        setFollowersCount(salonRes.data.followers_count);
+        setLoading(false);
+      } catch (err) {
+        console.error("Failed to fetch salon data", err);
+        setError("Failed to load salon details. Please try again later.");
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  const toggleService = (service: any) => {
+    if (selectedServices.find(s => s.id === service.id)) {
+      setSelectedServices(selectedServices.filter(s => s.id !== service.id));
+    } else {
+      setSelectedServices([...selectedServices, service]);
+    }
+  };
+
+  const totalPrice = selectedServices.reduce((sum, s) => sum + parseFloat(s.price), 0);
+
+  const handleShare = async () => {
+    const shareData = {
+      title: salon.name,
+      text: `Check out ${salon.name} on FindSalon Liberia!`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Share failed', err);
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      setShowShareToast(true);
+      setTimeout(() => setShowShareToast(false), 3000);
+    }
+  };
+
+  const toggleFollow = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    try {
+      const res = await api.post(`/salons/${id}/follow/`);
+      setIsFollowing(res.data.following);
+      setFollowersCount(res.data.followers_count);
+    } catch (err) {
+      console.error("Failed to toggle follow", err);
+    }
+  };
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    setIsSubmittingReview(true);
+    try {
+      const res = await api.post('/reviews/', {
+        salon: id,
+        rating: newReview.rating,
+        comment: newReview.comment
+      });
+      
+      setReviews([res.data, ...reviews]);
+      setShowReviewModal(false);
+      setNewReview({ rating: 5, comment: '' });
+      
+      showPopup({
+        title: 'Review Published',
+        message: 'Your feedback has been shared with the community. Thank you for supporting local excellence!',
+        type: 'SUCCESS'
+      });
+    } catch (err: any) {
+      console.error("Failed to submit review", err);
+      const msg = err.response?.data?.non_field_errors?.[0] || 
+                  err.response?.data?.detail || 
+                  "We encountered an issue while publishing your review. Please try again later.";
+      showPopup({
+        title: 'Submission Error',
+        message: msg,
+        type: 'ERROR'
+      });
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleBooking = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    if (selectedServices.length === 0 || !selectedDate || !selectedTime) {
+
+      showPopup({
+        title: 'Selection Incomplete',
+        message: 'Please select a treatment and appointment time to continue.',
+        type: 'INFO'
+      });
+      return;
+    }
+    
+    setIsBooking(true);
+    try {
+      // Convert "09:00 AM" or "02:30 PM" to "09:00" or "14:30"
+      let [time, modifier] = selectedTime.split(' ');
+      let [hours, minutes] = time.split(':');
+      if (hours === '12') hours = '00';
+      if (modifier === 'PM') hours = (parseInt(hours, 10) + 12).toString();
+      const formattedTime = `${hours.padStart(2, '0')}:${minutes}`;
+
+      await api.post('/bookings/', {
+        salon: id,
+        services: selectedServices.map(s => s.id),
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        start_time: formattedTime,
+      });
+      
+      setBookingSuccess(true);
+      showPopup({
+        title: 'Experience Booked',
+        message: `Your appointment at ${salon.name} is confirmed for ${format(selectedDate, 'MMMM do')} at ${selectedTime}.`,
+        type: 'SUCCESS'
+      });
+    } catch (err: any) {
+      console.error("Booking failed", err);
+      const msg = err.response?.data?.non_field_errors?.[0] || 
+                  err.response?.data?.detail || 
+                  "Booking failed. This time slot might already be taken.";
+      showPopup({
+        title: 'Booking Unavailable',
+        message: msg,
+        type: 'ERROR'
+      });
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  if (bookingSuccess) {
+    return (
+      <div className="bg-sand min-vh-100 d-flex align-items-center justify-content-center px-4">
+        <div className="card border-0 bg-white shadow-lg rounded-5 p-5 text-center max-w-500">
+          <div className="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style={{ width: '80px', height: '80px' }}>
+            <FiCheckCircle size={40} />
+          </div>
+          <h2 className="fw-bold mb-3 text-dark">Appointment Secured!</h2>
+          <p className="text-muted mb-4">Your visit to <span className="fw-bold text-dark">{salon.name}</span> is confirmed for <span className="fw-bold text-rust">{format(selectedDate, 'MMMM do')}</span> at <span className="fw-bold text-rust">{selectedTime}</span>.</p>
+          <div className="bg-light p-3 rounded-4 text-start mb-4">
+            <h6 className="fw-bold small text-uppercase letter-spaced mb-2">Services</h6>
+            {selectedServices.map(s => (
+              <div key={s.id} className="d-flex justify-content-between small mb-1">
+                <span>{s.name}</span>
+                <span className="fw-bold">${s.price}</span>
+              </div>
+            ))}
+            <div className="border-top mt-2 pt-2 d-flex justify-content-between fw-bold">
+              <span>Total</span>
+              <span>${totalPrice.toFixed(2)}</span>
+            </div>
+          </div>
+          <button onClick={() => window.location.href = '/'} className="btn btn-dark rounded-pill px-5 py-3 fw-bold w-100 transition-all hover-scale">Return Home</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-sand min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <div className="spinner-border text-rust" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted fw-bold letter-spaced">CURATING EXPERIENCE...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !salon) {
+    return (
+      <div className="bg-sand min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <h2 className="fw-bold mb-3">Oops!</h2>
+          <p className="text-muted">{error || "Salon not found."}</p>
+          <Link href="/salons" className="btn btn-rust rounded-pill px-4">Back to Discovery</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Group services by category
+  const categories = Array.from(new Set(services.map(s => s.category_name || "General Services")));
+
   return (
     <div className="bg-sand min-vh-100 pb-5">
+      {/* AUTH MODAL */}
+      {showAuthModal && (
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3" style={{ zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}>
+          <div className="card border-0 bg-white shadow-lg rounded-5 p-4 text-center" style={{ maxWidth: '400px' }}>
+            <div className="bg-rust bg-opacity-10 text-rust rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '60px', height: '60px' }}>
+              <FiHeart size={28} />
+            </div>
+            <h4 className="fw-bold text-dark mb-2">Join Our Community</h4>
+            <p className="text-muted small mb-4">Please login to interact with <span className="fw-bold text-dark">{salon.name}</span>, book appointments, and leave reviews.</p>
+            <div className="d-flex flex-column gap-2">
+              <button onClick={() => router.push('/login')} className="btn btn-rust rounded-pill py-3 fw-bold shadow-sm transition-all hover-scale">Sign In / Register</button>
+              <button onClick={() => setShowAuthModal(false)} className="btn btn-light bg-transparent border-0 text-muted small py-2">Continue Browsing</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showReviewModal && (
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3" style={{ zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}>
+          <div className="card border-0 bg-white shadow-lg rounded-5 p-4 w-100" style={{ maxWidth: '450px' }}>
+            <h4 className="fw-bold text-dark mb-2">Share Your Experience</h4>
+            <p className="text-muted small mb-4">How was your visit to {salon.name}?</p>
+            
+            <form onSubmit={handleReviewSubmit}>
+              <div className="mb-4">
+                <label className="form-label small fw-bold text-uppercase letter-spaced">Rating</label>
+                <div className="d-flex gap-2 text-rust">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <FiStar 
+                      key={star} 
+                      size={28} 
+                      className="cursor-pointer" 
+                      style={{ fill: star <= newReview.rating ? 'var(--accent-rust)' : 'none' }} 
+                      onClick={() => setNewReview({ ...newReview, rating: star })}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="form-label small fw-bold text-uppercase letter-spaced">Your Review</label>
+                <textarea 
+                  className="form-control rounded-4 border-secondary border-opacity-10 p-3" 
+                  rows={4}
+                  placeholder="Tell us about the service..."
+                  value={newReview.comment}
+                  onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                  required
+                ></textarea>
+              </div>
+              
+              <div className="d-flex flex-column gap-2">
+                <button type="submit" disabled={isSubmittingReview} className="btn btn-rust rounded-pill py-3 fw-bold shadow-sm">
+                  {isSubmittingReview ? 'Posting...' : 'Post Review'}
+                </button>
+                <button type="button" onClick={() => setShowReviewModal(false)} className="btn btn-light bg-transparent border-0 text-muted small py-2">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="container px-3 px-lg-5 pt-4 mt-2">
         {/* HEADER SECTION */}
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
           <div>
             <div className="d-flex gap-2 mb-2">
-              <span className="badge bg-warning text-dark px-2 border border-warning" style={{ fontSize: '0.65rem' }}>FEATURED</span>
+              {salon.rating >= 4.8 && <span className="badge bg-warning text-dark px-2 border border-warning" style={{ fontSize: '0.65rem' }}>FEATURED</span>}
               <span className="badge bg-info text-white bg-opacity-75 px-2 border border-info" style={{ backgroundColor: '#8DB8D0!important', fontSize: '0.65rem' }}>PREMIUM</span>
             </div>
-            <h1 className="fw-bold mb-2 text-dark" style={{ fontSize: '3rem', letterSpacing: '-1px' }}>The Gilded Mane</h1>
-            <div className="d-flex align-items-center text-muted fw-medium" style={{ fontSize: '0.9rem' }}>
-              <FiStar className="text-rust me-1" style={{ fill: 'var(--accent-rust)' }} /> <span className="text-dark fw-bold me-1">4.9</span> · 
-              <span className="text-decoration-underline mx-1">248 Reviews</span> · Mayfair, London
+            <h1 className="fw-bold mb-2 text-dark font-serif-italic" style={{ fontSize: '3.5rem', letterSpacing: '-1.5px' }}>{salon.name}</h1>
+            <div className="d-flex align-items-center text-muted fw-bold small letter-spaced" style={{ fontSize: '0.75rem' }}>
+              <FiStar className="text-rust me-1" style={{ fill: 'var(--accent-rust)' }} /> <span className="text-dark me-2">{salon.rating}/5.0</span> · 
+              <span className="text-decoration-underline mx-2 cursor-pointer">{reviews.length} REVIEWS</span> · 
+              <span className="mx-2">{followersCount} FOLLOWERS</span> · {salon.address.toUpperCase()}
+              {userLocation && salon.latitude && salon.longitude && (
+                <>
+                  <span className="mx-2">·</span>
+                  <span className="badge bg-rust bg-opacity-10 text-rust rounded-pill px-3 py-1" style={{ fontSize: '0.65rem' }}>
+                    {formatDistance(calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(salon.latitude), parseFloat(salon.longitude)))} FROM YOUR LOCATION
+                  </span>
+                </>
+              )}
             </div>
           </div>
-          <div className="mt-4 mt-md-0 d-flex gap-2">
-            <button className="btn btn-white bg-white rounded-pill border fw-bold shadow-sm px-4 py-2 d-flex align-items-center"><FiShare2 className="me-2" /> Share</button>
-            <button className="btn btn-dark rounded-pill fw-bold shadow-sm px-4 py-2 d-flex align-items-center"><FiHeart className="me-2 fill-white" style={{ fill: 'white' }} /> Follow</button>
+          <div className="mt-4 mt-md-0 d-flex gap-2 position-relative">
+            {showShareToast && (
+              <div className="position-absolute top-0 start-50 translate-middle-x bg-dark text-white px-3 py-1 rounded-pill small shadow-lg" style={{ marginTop: '-40px', whiteSpace: 'nowrap', zIndex: 1000 }}>
+                Link Copied!
+              </div>
+            )}
+            <button 
+              onClick={handleShare}
+              className="btn btn-white bg-white rounded-pill border fw-bold shadow-sm px-4 py-2 d-flex align-items-center transition-all hover-scale"
+            >
+              <FiShare2 className="me-2" /> Share
+            </button>
+            <button 
+              onClick={toggleFollow}
+              className={`btn rounded-pill fw-bold shadow-sm px-4 py-2 d-flex align-items-center transition-all hover-scale ${isFollowing ? 'btn-rust' : 'btn-dark'}`}
+            >
+              <FiHeart className={`me-2 ${isFollowing ? 'fill-white' : ''}`} style={{ fill: isFollowing ? 'white' : 'none' }} /> 
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
           </div>
         </div>
 
         {/* IMAGE GRID */}
         <div className="row g-3 mb-5">
-          <div className="col-md-8">
-            <div className="rounded-4 overflow-hidden shadow-sm" style={{ height: '400px' }}>
-              <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80" alt="Main Salon" className="w-100 h-100" style={{ objectFit: 'cover' }} />
-            </div>
-          </div>
-          <div className="col-md-4 d-flex flex-column gap-3">
-            <div className="row g-3" style={{ height: '190px' }}>
-              <div className="col-6 h-100">
-                <div className="rounded-4 overflow-hidden h-100 shadow-sm">
-                  <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" alt="Salon detailed" className="w-100 h-100" style={{ objectFit: 'cover' }} />
+          {salon.images && salon.images.length > 0 ? (
+            <>
+              <div className={salon.images.length === 1 ? "col-12" : "col-md-8"}>
+                <div className="rounded-4 overflow-hidden shadow-sm h-100" style={{ minHeight: '400px' }}>
+                  <img src={getImageUrl(salon.images[0].image)} alt={salon.name} className="w-100 h-100" style={{ objectFit: 'cover' }} />
                 </div>
               </div>
-              <div className="col-6 h-100">
-                <div className="rounded-4 overflow-hidden h-100 shadow-sm">
-                  <img src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=600&q=80" alt="Products" className="w-100 h-100" style={{ objectFit: 'cover' }} />
+              {salon.images.length > 1 && (
+                <div className="col-md-4 d-flex flex-column gap-3">
+                  <div className="row g-3" style={{ height: '190px' }}>
+                    <div className={salon.images.length === 2 ? "col-12 h-100" : "col-6 h-100"}>
+                      <div className="rounded-4 overflow-hidden h-100 shadow-sm">
+                        <img src={getImageUrl(salon.images[1].image)} alt="Salon detailed" className="w-100 h-100" style={{ objectFit: 'cover' }} />
+                      </div>
+                    </div>
+                    {salon.images.length > 2 && (
+                      <div className="col-6 h-100">
+                        <div className="rounded-4 overflow-hidden h-100 shadow-sm">
+                          <img src={getImageUrl(salon.images[2].image)} alt="Products" className="w-100 h-100" style={{ objectFit: 'cover' }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {salon.images.length > 3 && (
+                    <div className="rounded-4 overflow-hidden shadow-sm position-relative" style={{ height: '194px' }}>
+                      <button className="btn btn-light bg-white rounded-pill fw-bold shadow-sm px-3 py-1 position-absolute" style={{ bottom: '15px', right: '15px', zIndex: 10, fontSize: '0.8rem' }}>View {salon.images.length} Photos</button>
+                      <img src={getImageUrl(salon.images[3].image)} alt="Spa room" className="w-100 h-100" style={{ objectFit: 'cover' }} />
+                    </div>
+                  )}
                 </div>
+              )}
+            </>
+          ) : (
+            <div className="col-12">
+              <div className="rounded-4 overflow-hidden shadow-sm bg-sand d-flex align-items-center justify-content-center" style={{ height: '400px', border: '2px dashed rgba(0,0,0,0.1)' }}>
+                <p className="text-muted fw-bold letter-spaced">NO BRAND IMAGERY UPLOADED</p>
               </div>
             </div>
-            <div className="rounded-4 overflow-hidden shadow-sm position-relative" style={{ height: '194px' }}>
-              <button className="btn btn-light bg-white rounded-pill fw-bold shadow-sm px-3 py-1 position-absolute" style={{ bottom: '15px', right: '15px', zIndex: 10, fontSize: '0.8rem' }}>View 24 Photos</button>
-              <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=600&q=80" alt="Spa room" className="w-100 h-100" style={{ objectFit: 'cover' }} />
-            </div>
-          </div>
+          )}
         </div>
 
         {/* CONTENT & SIDEBAR */}
@@ -58,96 +414,93 @@ export default function SalonProfile() {
           <div className="col-lg-7 pe-lg-5">
             
             {/* Nav Pills */}
-            <div className="d-flex gap-2 overflow-auto mb-5 border-bottom pb-4">
-              <button className="btn bg-rust text-white rounded-pill fw-medium px-4">Most Popular</button>
-              <button className="btn rounded-pill fw-medium px-4 text-dark" style={{ backgroundColor: '#EBE5DB' }}>Haircutting</button>
-              <button className="btn rounded-pill fw-medium px-4 text-dark" style={{ backgroundColor: '#EBE5DB' }}>Coloring</button>
-              <button className="btn rounded-pill fw-medium px-4 text-dark" style={{ backgroundColor: '#EBE5DB' }}>Treatments</button>
+            <div className="d-flex gap-2 overflow-auto mb-5 border-bottom pb-4 scrollbar-none">
+              <button className="btn btn-rust rounded-pill fw-bold px-4 small shadow-sm text-uppercase letter-spaced">Services</button>
+              {categories.map((cat: any) => (
+                <button key={cat} className="btn rounded-pill fw-bold px-4 text-muted small text-uppercase letter-spaced transition-all hover-bg-light">{cat}</button>
+              ))}
             </div>
 
-            {/* Service Category */}
-            <div className="mb-5">
-              <h3 className="fw-bold mb-4 text-dark">Haircutting & Styling</h3>
-              
-              <div className="card border-0 bg-white shadow-sm rounded-4 mb-3 p-4 d-flex flex-row justify-content-between align-items-center">
-                <div>
-                  <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: '1.05rem' }}>Signature Director's Cut</h6>
-                  <p className="text-muted small mb-1">Consultation, detox wash, precision cut, and editorial styling.</p>
-                  <p className="text-rust small fw-bold mb-0">60 min</p>
-                </div>
-                <div className="text-end ms-4">
-                  <h5 className="fw-bold text-dark mb-2">£95</h5>
-                  <button className="btn btn-sm rounded-pill px-3 fw-bold text-dark" style={{ backgroundColor: '#EBE5DB' }}>ADD</button>
-                </div>
+            {/* Service Categories */}
+            {categories.map((category: any) => (
+              <div className="mb-5" key={category}>
+                <h3 className="fw-bold mb-4 text-dark">{category}</h3>
+                {services.filter(s => (s.category_name || "General Services") === category).map((service) => {
+                  const isSelected = selectedServices.find(ss => ss.id === service.id);
+                  return (
+                    <div 
+                      key={service.id} 
+                      onClick={() => toggleService(service)}
+                      className={`card border-0 shadow-sm rounded-5 mb-3 p-3 p-md-4 d-flex flex-row align-items-center transition-all hover-scale cursor-pointer ${isSelected ? 'border-rust border-2' : 'bg-white'}`}
+                      style={isSelected ? { border: '2px solid var(--accent-rust)', backgroundColor: '#FDF2E3' } : {}}
+                    >
+                      <div className="rounded-4 overflow-hidden me-3 me-md-4 flex-shrink-0" style={{ width: '80px', height: '80px', backgroundColor: '#FDFBF7' }}>
+                        <img 
+                          src={getImageUrl(service.image) || 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80'} 
+                          alt={service.name} 
+                          className="w-100 h-100 object-fit-cover"
+                        />
+                      </div>
+                      <div className="flex-grow-1 pe-2 pe-md-4">
+                        <h6 className="fw-bold mb-1 text-dark text-uppercase letter-spaced" style={{ fontSize: '0.85rem' }}>{service.name}</h6>
+                        <p className="text-muted small mb-2 font-serif-italic d-none d-sm-block">{service.description}</p>
+                        <div className="d-flex align-items-center gap-3 text-rust fw-bold" style={{ fontSize: '0.7rem' }}>
+                          <span className="d-flex align-items-center"><FiClock className="me-1"/> {service.duration} MIN</span>
+                        </div>
+                      </div>
+                      <div className="text-end min-w-80 flex-shrink-0">
+                        <h5 className="fw-bold text-dark mb-2">${service.price}</h5>
+                        <button className={`btn rounded-pill px-3 px-md-4 py-1 py-md-2 fw-bold small letter-spaced shadow-sm ${isSelected ? 'btn-rust' : 'btn-dark'}`}>
+                          {isSelected ? 'ADDED' : 'ADD'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div className="card border-0 bg-white shadow-sm rounded-4 mb-3 p-4 d-flex flex-row justify-content-between align-items-center">
-                <div>
-                  <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: '1.05rem' }}>Classic Blow Dry</h6>
-                  <p className="text-muted small mb-1">Smooth finish or voluminous waves using premium heat protection.</p>
-                  <p className="text-rust small fw-bold mb-0">45 min</p>
-                </div>
-                <div className="text-end ms-4">
-                  <h5 className="fw-bold text-dark mb-2">£45</h5>
-                  <button className="btn btn-sm rounded-pill px-3 fw-bold text-dark" style={{ backgroundColor: '#EBE5DB' }}>ADD</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-5">
-              <h3 className="fw-bold mb-4 text-dark">Technical Coloring</h3>
-              <div className="card border-0 bg-white shadow-sm rounded-4 mb-3 p-4 d-flex flex-row justify-content-between align-items-center">
-                <div>
-                  <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: '1.05rem' }}>Lived-in Balayage</h6>
-                  <p className="text-muted small mb-1">Custom hand-painted highlights for a natural, sun-kissed look.</p>
-                  <p className="text-rust small fw-bold mb-0">180 min</p>
-                </div>
-                <div className="text-end ms-4">
-                  <h5 className="fw-bold text-dark mb-2">£185</h5>
-                  <button className="btn btn-sm rounded-pill px-3 fw-bold text-dark" style={{ backgroundColor: '#EBE5DB' }}>ADD</button>
-                </div>
-              </div>
-            </div>
+            ))}
 
             {/* Testimonials */}
             <div className="mb-5 pt-4 border-top">
-              <div className="d-flex justify-content-between align-items-end mb-4">
-                <h3 className="fw-bold mb-0 text-dark">Client Stories</h3>
-                <span className="fw-bold text-dark"><FiStar className="text-rust me-1" style={{ fill: 'var(--accent-rust)' }}/> 4.9 / 5.0</span>
-              </div>
-              
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <div className="card bg-transparent border-0 rounded-4 p-4 h-100" style={{ backgroundColor: '#FDFCFB!important', boxShadow: 'inset 0 0 0 1px #EBE5DB' }}>
-                    <div className="d-flex align-items-center mb-3">
-                      <div className="rounded-circle bg-rust bg-opacity-25 text-rust d-flex align-items-center justify-content-center fw-bold me-3" style={{ width: '40px', height: '40px', fontSize: '0.8rem' }}>EM</div>
-                      <div>
-                        <h6 className="fw-bold text-dark mb-0 fs-6">Elena Martinez</h6>
-                        <small className="text-muted" style={{ fontSize: '0.7rem' }}>2 days ago</small>
-                      </div>
+                <div className="d-flex justify-content-between align-items-end mb-4">
+                  <div>
+                    <h3 className="fw-bold mb-1 text-dark">Client Stories</h3>
+                    <div className="fw-bold text-dark small">
+                      <FiStar className="text-rust me-1" style={{ fill: 'var(--accent-rust)' }}/> {salon.rating} / 5.0
                     </div>
-                    <div className="text-rust mb-2 shadow-none d-flex gap-1" style={{ fontSize: '0.8rem' }}>
-                      <FiStar style={{ fill: 'var(--accent-rust)' }}/><FiStar style={{ fill: 'var(--accent-rust)' }}/><FiStar style={{ fill: 'var(--accent-rust)' }}/><FiStar style={{ fill: 'var(--accent-rust)' }}/><FiStar style={{ fill: 'var(--accent-rust)' }}/>
-                    </div>
-                    <p className="text-muted small font-serif-italic mb-0">"The most professional service I've had in years. The atmosphere is quiet, luxury, and the balayage result exceeded my expectations."</p>
                   </div>
+                  <button onClick={() => user ? setShowReviewModal(true) : setShowAuthModal(true)} className="btn btn-outline-rust rounded-pill px-4 fw-bold small">Write a Review</button>
                 </div>
-                <div className="col-md-6">
-                  <div className="card bg-transparent border-0 rounded-4 p-4 h-100" style={{ backgroundColor: '#FDFCFB!important', boxShadow: 'inset 0 0 0 1px #EBE5DB' }}>
-                    <div className="d-flex align-items-center mb-3">
-                      <div className="rounded-circle bg-dark bg-opacity-10 text-dark d-flex align-items-center justify-content-center fw-bold me-3" style={{ width: '40px', height: '40px', fontSize: '0.8rem' }}>JD</div>
-                      <div>
-                        <h6 className="fw-bold text-dark mb-0 fs-6">James Dalton</h6>
-                        <small className="text-muted" style={{ fontSize: '0.7rem' }}>1 week ago</small>
+                
+                {reviews.length > 0 ? (
+                  <div className="row g-3">
+                    {reviews.map((review) => (
+                      <div className="col-md-6" key={review.id}>
+                        <div className="card bg-white border-0 shadow-sm rounded-5 p-4 h-100">
+                          <div className="d-flex align-items-center mb-3">
+                            <div className="rounded-circle bg-rust bg-opacity-10 text-rust d-flex align-items-center justify-content-center fw-bold me-3" style={{ width: '40px', height: '40px', fontSize: '0.8rem' }}>
+                              {review.user_name?.[0] || 'U'}
+                            </div>
+                            <div>
+                              <h6 className="fw-bold text-dark mb-0 fs-6">{review.user_name || 'Guest User'}</h6>
+                              <small className="text-muted" style={{ fontSize: '0.7rem' }}>{new Date(review.created_at).toLocaleDateString()}</small>
+                            </div>
+                          </div>
+                          <div className="text-rust mb-2 d-flex gap-1" style={{ fontSize: '0.8rem' }}>
+                            {[...Array(5)].map((_, i) => (
+                              <FiStar key={i} style={{ fill: i < review.rating ? 'var(--accent-rust)' : 'none' }}/>
+                            ))}
+                          </div>
+                          <p className="text-muted small font-serif-italic mb-0" style={{ fontSize: '0.85rem' }}>"{review.comment}"</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-rust mb-2 shadow-none d-flex gap-1" style={{ fontSize: '0.8rem' }}>
-                      <FiStar style={{ fill: 'var(--accent-rust)' }}/><FiStar style={{ fill: 'var(--accent-rust)' }}/><FiStar style={{ fill: 'var(--accent-rust)' }}/><FiStar style={{ fill: 'var(--accent-rust)' }}/><FiStar style={{ fill: 'var(--accent-rust)' }}/>
-                    </div>
-                    <p className="text-muted small font-serif-italic mb-0">"The Director's Cut is worth every penny. Expert precision and great conversation. Truly a premium experience in the heart of Mayfair."</p>
+                    ))}
                   </div>
-                </div>
-              </div>
+                ) : (
+                  <div className="bg-white rounded-5 p-5 text-center border border-dashed opacity-50">
+                    <p className="mb-0 text-muted">No stories shared yet. Be the first to share yours!</p>
+                  </div>
+                )}
             </div>
 
           </div>
@@ -160,51 +513,110 @@ export default function SalonProfile() {
               
               {/* Date Picker Header */}
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="fw-bold text-dark mb-0" style={{ letterSpacing: '1px', fontSize: '0.8rem' }}>OCTOBER 2024</h6>
-                <div className="d-flex gap-2 text-muted">
-                  <FiChevronLeft className="cursor-pointer" />
-                  <FiChevronRight className="cursor-pointer text-dark" />
+                <h6 className="fw-bold text-dark mb-0 text-uppercase letter-spaced" style={{ fontSize: '0.8rem' }}>
+                  {format(currentMonth, 'MMMM yyyy')}
+                </h6>
+                <div className="d-flex gap-2">
+                  <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="btn btn-sm btn-light rounded-circle p-1 d-flex align-items-center justify-content-center" style={{ width: '28px', height: '28px' }}>
+                    <FiChevronLeft />
+                  </button>
+                  <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="btn btn-sm btn-light rounded-circle p-1 d-flex align-items-center justify-content-center" style={{ width: '28px', height: '28px' }}>
+                    <FiChevronRight />
+                  </button>
                 </div>
               </div>
 
-              {/* Day Pills */}
-              <div className="d-flex justify-content-between mb-4 border-bottom pb-4">
-                <div className="d-flex flex-column align-items-center bg-rust text-white rounded-pill px-2 py-3 shadow-sm" style={{ width: '55px' }}>
-                  <span className="small mb-1" style={{ fontSize: '0.7rem' }}>MON</span>
-                  <span className="fw-bold fs-5">14</span>
+              {/* Full Calendar Grid */}
+              <div className="mb-4">
+                <div className="row g-0 mb-2">
+                  {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(day => (
+                    <div key={day} className="col text-center text-muted fw-bold" style={{ fontSize: '0.65rem' }}>{day}</div>
+                  ))}
                 </div>
-                <div className="d-flex flex-column align-items-center text-muted rounded-pill px-2 py-3" style={{ width: '55px', backgroundColor: '#F9F7F4' }}>
-                  <span className="small mb-1" style={{ fontSize: '0.7rem' }}>TUE</span>
-                  <span className="fw-bold fs-5 text-dark">15</span>
-                </div>
-                <div className="d-flex flex-column align-items-center text-muted rounded-pill px-2 py-3" style={{ width: '55px', backgroundColor: '#F9F7F4' }}>
-                  <span className="small mb-1" style={{ fontSize: '0.7rem' }}>WED</span>
-                  <span className="fw-bold fs-5 text-dark">16</span>
-                </div>
-                <div className="d-flex flex-column align-items-center text-muted rounded-pill px-2 py-3" style={{ width: '55px', backgroundColor: '#F9F7F4' }}>
-                  <span className="small mb-1" style={{ fontSize: '0.7rem' }}>THU</span>
-                  <span className="fw-bold fs-5 text-dark">17</span>
+                <div className="row g-1">
+                  {(() => {
+                    const start = startOfMonth(currentMonth);
+                    const end = endOfMonth(currentMonth);
+                    const days = eachDayOfInterval({ start, end });
+                    
+                    // Add padding for start of month
+                    const startDay = start.getDay(); // 0 is Sunday
+                    const padding = startDay === 0 ? 6 : startDay - 1; // Adjust for Monday start
+                    
+                    return (
+                      <>
+                        {[...Array(padding)].map((_, i) => (
+                          <div key={`pad-${i}`} className="col" style={{ flex: '0 0 14.28%' }}></div>
+                        ))}
+                        {days.map((date) => {
+                          const isPast = isBefore(date, startOfToday());
+                          const isSelected = isSameDay(date, selectedDate);
+                          return (
+                            <div key={date.toString()} className="col" style={{ flex: '0 0 14.28%' }}>
+                              <button 
+                                onClick={() => !isPast && setSelectedDate(date)}
+                                disabled={isPast}
+                                className={`btn btn-sm w-100 rounded-circle p-0 d-flex align-items-center justify-content-center border-0 transition-all ${
+                                  isSelected ? 'bg-rust text-white shadow-sm scale-110' : 
+                                  isPast ? 'text-muted opacity-25 cursor-not-allowed' : 'text-dark hover-bg-light'
+                                }`}
+                                style={{ height: '32px', fontSize: '0.8rem', fontWeight: isSelected ? '700' : '500' }}
+                              >
+                                {date.getDate()}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
               {/* Time Slots */}
-              <h6 className="fw-bold text-dark mb-3 text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.7rem' }}>Available Slots</h6>
+              <h6 className="fw-bold text-dark mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.7rem' }}>Available Slots</h6>
               <div className="row g-2 mb-4">
-                <div className="col-4"><button className="btn w-100 rounded-pill py-2 border fw-medium text-dark small bg-white" style={{ fontSize: '0.8rem' }}>09:00 AM</button></div>
-                <div className="col-4"><button className="btn w-100 rounded-pill py-2 border fw-medium text-dark small bg-white" style={{ fontSize: '0.8rem' }}>11:30 AM</button></div>
-                <div className="col-4"><button className="btn btn-dark w-100 rounded-pill py-2 fw-medium small border-0 shadow-sm" style={{ fontSize: '0.8rem' }}>02:00 PM</button></div>
-                <div className="col-4"><button className="btn w-100 rounded-pill py-2 border fw-medium text-muted small bg-white" style={{ fontSize: '0.8rem', opacity: 0.5 }} disabled>04:15 PM</button></div>
-                <div className="col-4"><button className="btn w-100 rounded-pill py-2 border fw-medium text-dark small bg-white" style={{ fontSize: '0.8rem' }}>05:30 PM</button></div>
-                <div className="col-4"><button className="btn w-100 rounded-pill py-2 border fw-medium text-muted small bg-white" style={{ fontSize: '0.8rem', opacity: 0.5 }} disabled>07:00 PM</button></div>
+                {['09:00 AM', '10:30 AM', '11:45 AM', '01:15 PM', '02:30 PM', '04:00 PM', '05:30 PM', '07:00 PM'].map((time) => {
+                  const isSelected = selectedTime === time;
+                  return (
+                    <div className="col-4" key={time}>
+                      <button 
+                        onClick={() => setSelectedTime(time)}
+                        className={`btn w-100 rounded-pill py-2 border fw-medium small transition-all ${
+                          isSelected ? 'btn-dark border-dark shadow-sm' : 'bg-white text-dark hover-bg-light'
+                        }`} 
+                        style={{ fontSize: '0.75rem' }}
+                      >
+                        {time}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Summary */}
               <div className="d-flex justify-content-between align-items-center border-top pt-4 mb-4">
-                <span className="text-dark fw-medium small">Selected Services (1)</span>
-                <h5 className="fw-bold text-dark mb-0">£95.00</h5>
+                <div className="d-flex flex-column">
+                  <span className="text-dark fw-bold small">Total Price</span>
+                  <span className="text-muted small" style={{ fontSize: '0.65rem' }}>{selectedServices.length} Services Selected</span>
+                </div>
+                <h5 className="fw-bold text-dark mb-0">${totalPrice.toFixed(2)}</h5>
               </div>
 
-              <button className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm mb-3">Complete Booking</button>
+              <button 
+                onClick={handleBooking}
+                className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm mb-3 transition-all hover-scale d-flex align-items-center justify-content-center" 
+                disabled={selectedServices.length === 0 || !selectedTime || isBooking}
+              >
+                {isBooking ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Processing...
+                  </>
+                ) : (
+                  'Complete Booking'
+                )}
+              </button>
               <p className="text-center text-muted mb-0" style={{ fontSize: '0.65rem' }}>No immediate payment required. You'll pay after your appointment.</p>
             </div>
           </div>

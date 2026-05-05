@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { getImageUrl, api } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import { 
   FiDollarSign, 
   FiCalendar, 
@@ -17,7 +19,9 @@ import {
   FiX,
   FiPieChart,
   FiGrid,
-  FiBriefcase
+  FiBriefcase,
+  FiTag,
+  FiImage
 } from 'react-icons/fi';
 
 export default function OwnerLayout({
@@ -26,7 +30,52 @@ export default function OwnerLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const pathname = usePathname();
+  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/auth/profile/');
+        const userProfile = res.data;
+        setProfile(userProfile);
+        
+        if (userProfile.role !== 'OWNER' && userProfile.role !== 'ADMIN') {
+          router.push('/profile');
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
+        router.push('/login');
+      }
+    };
+    fetchProfile();
+  }, [pathname, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
+  if (!profile) return (
+    <div className="d-flex min-vh-100 align-items-center justify-content-center bg-sand">
+        <div className="text-center">
+            <div className="spinner-border text-rust mb-3" role="status"></div>
+            <p className="text-muted small fw-bold">Verifying Credentials...</p>
+        </div>
+    </div>
+  );
+
+  if (profile.role !== 'OWNER' && profile.role !== 'ADMIN') {
+    return (
+        <div className="d-flex min-vh-100 align-items-center justify-content-center bg-sand">
+            <div className="text-center">
+                <p className="text-muted small fw-bold">Redirecting to your profile...</p>
+            </div>
+        </div>
+    );
+  }
 
   const navItems = [
     { label: 'Dashboard', icon: <FiGrid />, path: '/owner/dashboard' },
@@ -35,7 +84,10 @@ export default function OwnerLayout({
     { label: 'Inventory', icon: <FiDatabase />, path: '/owner/inventory' },
     { label: 'Customers', icon: <FiUsers />, path: '/owner/customers' },
     { label: 'Staff', icon: <FiBriefcase />, path: '/owner/staff' },
+    { label: 'Deals', icon: <FiTag />, path: '/owner/deals' },
+    { label: 'Ads & Featured', icon: <FiImage />, path: '/owner/ads' },
     { label: 'Analytics', icon: <FiPieChart />, path: '/owner/analytics' },
+    { label: 'Billing', icon: <FiDollarSign />, path: '/owner/billing' },
   ];
 
   const isActive = (path: string) => {
@@ -56,20 +108,23 @@ export default function OwnerLayout({
 
       {/* Sidebar */}
       <aside 
-        className={`bg-white border-end d-flex flex-column transition-all z-2 overflow-y-auto sidebar-custom-scroll ${isSidebarOpen ? 'translate-x-0' : 'translate-x-mobile-hide'} position-fixed position-md-sticky h-100vh h-md-auto`}
+        className={`d-flex flex-column transition-all z-2 overflow-y-auto sidebar-custom-scroll ${isSidebarOpen ? 'translate-x-0' : 'translate-x-mobile-hide'} position-fixed position-md-sticky h-100vh h-md-auto`}
         style={{ 
           width: '280px', 
           minWidth: '280px', 
-          backgroundColor: '#FFF',
-          borderRight: '1px solid rgba(0,0,0,0.05)',
+          backgroundColor: '#1E1915',
+          borderRight: '1px solid rgba(255,255,255,0.05)',
           top: 0
         }}
       >
         <div className="p-4 pt-5">
           {/* Logo / Salon Info */}
-          <div className="mb-5">
-                <h4 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-1.5px' }}>Aura Luxe</h4>
-                <p className="text-muted fw-bold mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>PREMIUM SALON TIER</p>
+          <div className="mb-5 px-2">
+            <Link href="/owner/dashboard" className="text-decoration-none">
+              <div className="d-flex align-items-center">
+                <img src="/logo.jpg" alt="FindSalon" height="50" className="rounded-1 shadow-sm" style={{ filter: 'brightness(1.1)' }} />
+              </div>
+            </Link>
           </div>
 
           {/* Navigation */}
@@ -78,47 +133,58 @@ export default function OwnerLayout({
               <Link 
                 key={item.path} 
                 href={item.path} 
-                className={`text-decoration-none px-4 py-3 rounded-pill d-flex align-items-center gap-3 transition-all ${isActive(item.path) ? 'bg-white shadow-sm border border-opacity-10 text-rust fw-bold' : 'text-muted hover-bg-sand fw-medium'}`}
+                className={`text-decoration-none px-4 py-3 rounded-pill d-flex align-items-center gap-3 transition-all ${isActive(item.path) ? 'bg-white shadow-sm text-rust fw-bold' : 'text-white-50 hover-bg-espresso fw-medium'}`}
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <span className={isActive(item.path) ? 'text-rust' : 'text-muted opacity-50'}>{item.icon}</span>
-                <span style={{ fontSize: '0.9rem' }}>{item.label}</span>
+                <span className={isActive(item.path) ? 'text-rust' : 'text-white-50 opacity-50'}>{item.icon}</span>
+                <span style={{ fontSize: '1.05rem' }} className="fw-medium">{item.label}</span>
               </Link>
             ))}
           </nav>
+        </div>
 
-          {/* Upgrade Card */}
-          <div className="mx-2 mb-5">
-             <div className="bg-orange p-4 rounded-5 text-white" style={{ background: 'linear-gradient(135deg, #FF7E5F, #FE512E)' }}>
-                <h6 className="fw-bold mb-2">Upgrade to Pro</h6>
-                <p className="small opacity-75 mb-4" style={{ fontSize: '0.7rem' }}>Unlock advanced analytics and team scheduling tools.</p>
-                <button className="btn btn-dark w-100 rounded-pill py-2 fw-bold small border-0 shadow-sm" style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}>Upgrade</button>
-             </div>
-          </div>
+        {/* Divider Line */}
+        <div className="px-4 mb-2">
+            <hr className="my-0 opacity-10" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
         </div>
 
         {/* Sidebar Footer - Profile Card */}
-        <div className="p-4 mt-auto border-top border-opacity-10">
-          <Link href="/owner/settings" className="text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 hover-rust mb-3 small fw-bold">
-            <FiSettings className="opacity-50" /> Settings
+        <div className="p-4 mt-auto">
+          <Link href="/owner/settings" className="text-decoration-none text-white-50 d-flex align-items-center gap-3 px-4 py-2 hover-light mb-3 fw-bold" style={{ fontSize: '1rem' }}>
+            <FiSettings className="opacity-50" /> <span className="hover-target">Settings</span>
           </Link>
-          <Link href="/owner/support" className="text-decoration-none text-muted d-flex align-items-center gap-3 px-4 py-2 hover-rust mb-4 small fw-bold">
-            <FiHelpCircle className="opacity-50" /> Support
+          <Link href="/owner/support" className="text-decoration-none text-white-50 d-flex align-items-center gap-3 px-4 py-2 hover-light mb-4 fw-bold" style={{ fontSize: '1rem' }}>
+            <FiHelpCircle className="opacity-50" /> <span className="hover-target">Support</span>
           </Link>
           
-          <div className="d-flex align-items-center gap-3 px-3 py-2 bg-sand rounded-4 border border-opacity-10">
-            <div className="rounded-circle overflow-hidden bg-secondary shadow-sm" style={{ width: '40px', height: '40px' }}>
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" alt="Owner" className="w-100 h-100 object-fit-cover" />
+          <Link href="/owner/settings?tab=Owner+Profile" className="d-flex align-items-center gap-3 px-3 py-2 bg-white bg-opacity-5 rounded-4 border border-white border-opacity-10 text-decoration-none transition-all hover-scale" onClick={() => setIsSidebarOpen(false)}>
+            <div className="rounded-circle overflow-hidden bg-white shadow-sm border d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', minWidth: '40px' }}>
+                {profile?.avatar ? (
+                  <img src={getImageUrl(profile.avatar)} alt="Owner" className="w-100 h-100 object-fit-cover" />
+                ) : (
+                  <span className="fw-bold text-rust small">
+                    {(profile?.first_name?.[0] || '') + (profile?.last_name?.[0] || '')}
+                  </span>
+                )}
             </div>
             <div className="flex-grow-1 min-w-0">
-                <h6 className="fw-bold mb-0 text-dark small text-truncate">Salon Owner Profile</h6>
-                <span className="text-muted" style={{ fontSize: '0.65rem' }}>View Account</span>
+                <h6 className="fw-bold mb-0 text-white text-truncate" style={{ fontSize: '1rem' }}>
+                  {profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email : 'Salon Owner Profile'}
+                </h6>
+                <span className="text-white-50" style={{ fontSize: '0.75rem' }}>View Account</span>
             </div>
-          </div>
+          </Link>
+
+          <button 
+            onClick={handleLogout}
+            className="btn btn-link text-decoration-none text-white-50 d-flex align-items-center gap-3 px-4 py-2 hover-light mt-3 w-100 border-0 fw-bold shadow-none" 
+            style={{ fontSize: '1rem' }}
+          >
+            <FiLogOut className="opacity-50" /> <span className="hover-target">Logout</span>
+          </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-grow-1 p-3 p-md-5 overflow-auto">
         <div className="container-fluid p-0">
            {children}
@@ -160,6 +226,33 @@ export default function OwnerLayout({
         .sidebar-custom-scroll {
           scrollbar-width: thin;
           scrollbar-color: rgba(156, 74, 52, 0.4) #FDFBF7;
+        }
+
+        .hover-bg-espresso:hover {
+          background-color: rgba(255, 255, 255, 0.05) !important;
+          color: white !important;
+        }
+        
+        .hover-bg-espresso:hover span {
+          color: white !important;
+          opacity: 1 !important;
+        }
+
+        .hover-light:hover {
+          color: white !important;
+        }
+
+        .hover-target {
+          transition: transform 0.3s ease;
+          display: inline-block;
+        }
+        
+        .hover-light:hover .hover-target {
+          transform: translateX(8px);
+        }
+
+        .hover-scale:hover {
+          transform: scale(1.02);
         }
       `}</style>
     </div>
