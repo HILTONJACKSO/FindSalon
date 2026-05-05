@@ -2,6 +2,9 @@
  * Calculates the distance between two points in kilometers using the Haversine formula.
  */
 export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+        return NaN;
+    }
     const R = 6371; // Radius of the earth in km
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
@@ -22,6 +25,9 @@ function deg2rad(deg: number): number {
  * Formats distance for display.
  */
 export function formatDistance(km: number): string {
+    if (isNaN(km)) {
+        return "---";
+    }
     if (km < 1) {
         return `${Math.round(km * 1000)}m`;
     }
