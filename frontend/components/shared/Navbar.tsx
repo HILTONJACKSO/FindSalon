@@ -76,13 +76,15 @@ export default function Navbar({
 
   return (
     <nav 
-      className={`navbar py-3 px-4 px-md-5 sticky-top z-3 transition-all duration-500 ${
+      className={`navbar py-3 px-4 px-md-5 sticky-top transition-all duration-500 ${
         scrolled 
           ? 'bg-white bg-opacity-75 backdrop-blur shadow-sm border-bottom' 
           : isHome ? 'bg-transparent' : 'bg-white border-bottom'
       }`}
       style={{ 
+        zIndex: 1050,
         borderBottom: scrolled ? '1px solid rgba(0,0,0,0.05)' : '1px solid transparent',
+
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none'
       }}
