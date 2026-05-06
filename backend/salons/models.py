@@ -7,6 +7,10 @@ class Salon(models.Model):
         ESSENTIAL = 'ESSENTIAL', 'Essential'
         ELITE = 'ELITE', 'Elite'
 
+    class Type(models.TextChoices):
+        PHYSICAL = 'PHYSICAL', 'Physical Salon'
+        INDEPENDENT = 'INDEPENDENT', 'Independent Pro (Home Service)'
+
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='salons')
     name = models.CharField(max_length=255, db_index=True)
     description = models.TextField(blank=True)
@@ -19,6 +23,10 @@ class Salon(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_approved = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    
+    # New Fields for Independent Pros
+    salon_type = models.CharField(max_length=20, choices=Type.choices, default=Type.PHYSICAL)
+    offers_home_service = models.BooleanField(default=False)
     
     # Subscription Fields
     subscription_plan = models.CharField(max_length=20, choices=Plan.choices, default=Plan.TRIAL)

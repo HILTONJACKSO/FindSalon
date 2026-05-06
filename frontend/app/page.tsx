@@ -20,6 +20,7 @@ const FadeIn = ({ children }: { children: React.ReactNode }) => (
 export default function Home() {
   const [curatedSalons, setCuratedSalons] = useState<any[]>([]);
   const [nearbySalons, setNearbySalons] = useState<any[]>([]);
+  const [independentPros, setIndependentPros] = useState<any[]>([]);
   const [featuredServices, setFeaturedServices] = useState<any[]>([]);
   const [ads, setAds] = useState<any[]>([]);
   const { location: userLocation } = useLocation();
@@ -51,8 +52,12 @@ export default function Home() {
         setFeaturedServices(servicesRes.data.results || servicesRes.data);
         setAds(adsRes.data);
 
-        
         const allSalons = allSalonsRes.data.results || allSalonsRes.data;
+        
+        // Filter Independent Pros
+        const independent = allSalons.filter((s: any) => s.salon_type === 'INDEPENDENT');
+        setIndependentPros(independent.slice(0, 3));
+
         if (userLocation) {
           const sorted = [...allSalons].sort((a, b) => {
             const distA = calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(a.latitude), parseFloat(a.longitude));
@@ -290,7 +295,57 @@ export default function Home() {
         </FadeIn>
       )}
 
-      {/* LUXURY SERVICES ICONS */}
+      {/* ELITE MOBILE ARTISTS SECTION */}
+      {independentPros.length > 0 && (
+        <FadeIn>
+          <section className="container mt-5 pt-5">
+            <div className="bg-dark rounded-5 p-5 text-white overflow-hidden position-relative">
+              <div className="position-absolute top-0 end-0 p-5 opacity-10">
+                <FiScissors size={200} />
+              </div>
+              
+              <div className="position-relative" style={{ zIndex: 1 }}>
+                <p className="text-rust text-uppercase fw-bold mb-2 small letter-spaced">At Your Door</p>
+                <h2 className="fw-bold mb-2 display-5 font-serif-italic text-white">Elite Mobile Artists</h2>
+                <p className="text-white-50 mb-5 lead opacity-75" style={{ maxWidth: '600px' }}>Skip the commute. Experience luxury beauty treatments in the comfort of your own home with our hand-picked independent professionals.</p>
+                
+                <div className="row g-4">
+                  {independentPros.map((pro) => (
+                    <div className="col-lg-4" key={pro.id}>
+                      <div 
+                        onClick={() => router.push(`/salons/${pro.id}`)}
+                        className="bg-white bg-opacity-10 backdrop-blur rounded-4 p-4 h-100 transition-all hover-translate-up cursor-pointer border border-white border-opacity-10"
+                      >
+                        <div className="d-flex align-items-center mb-4">
+                          <img 
+                            src={pro.cover_image || 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&q=80'} 
+                            className="rounded-circle object-fit-cover shadow-sm border border-white border-opacity-20"
+                            style={{ width: '70px', height: '70px' }}
+                            alt={pro.name}
+                          />
+                          <div className="ms-3">
+                            <h5 className="fw-bold text-white mb-1">{pro.name}</h5>
+                            <div className="d-flex align-items-center text-rust small fw-bold">
+                              <FiStar className="me-1 fill-rust" size={12} /> {pro.rating || '5.0'} · Independent
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <p className="text-white-50 small mb-4 line-clamp-2">{pro.description || "Expert beauty services delivered directly to your doorstep with meticulous attention to detail."}</p>
+                        
+                        <div className="d-flex align-items-center justify-content-between pt-3 border-top border-white border-opacity-10">
+                          <span className="text-white fw-bold">From ${pro.min_price || '20'}</span>
+                          <div className="btn btn-rust btn-sm rounded-pill px-3 fw-bold">Quick Book</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </FadeIn>
+      )}
 
 
       <section className="container mt-5 pt-5">

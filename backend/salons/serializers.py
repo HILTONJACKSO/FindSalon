@@ -46,8 +46,8 @@ class SalonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Salon
-        fields = ('id', 'owner', 'owner_email', 'name', 'description', 'address', 'latitude', 'longitude', 'opening_hours', 'images', 'category', 'category_data', 'rating', 'reviews_count', 'min_price', 'cover_image', 'staff_count', 'stylist_avatars', 'offered_services', 'followers_count', 'is_following', 'is_approved', 'is_active', 'subscription_plan', 'created_at')
-        read_only_fields = ('id', 'owner', 'owner_email', 'created_at', 'rating', 'reviews_count', 'min_price', 'cover_image', 'staff_count', 'stylist_avatars', 'offered_services', 'followers_count', 'is_following', 'is_approved', 'is_active', 'subscription_plan')
+        fields = ('id', 'owner', 'owner_email', 'name', 'description', 'address', 'latitude', 'longitude', 'opening_hours', 'images', 'category', 'category_data', 'rating', 'reviews_count', 'min_price', 'cover_image', 'staff_count', 'stylist_avatars', 'offered_services', 'followers_count', 'is_following', 'is_approved', 'is_active', 'salon_type', 'offers_home_service', 'subscription_plan', 'created_at')
+        read_only_fields = ('id', 'owner', 'owner_email', 'created_at', 'rating', 'reviews_count', 'min_price', 'cover_image', 'staff_count', 'stylist_avatars', 'offered_services', 'followers_count', 'is_following', 'is_approved', 'is_active', 'salon_type', 'offers_home_service', 'subscription_plan')
 
     def get_owner_email(self, obj):
         try:
