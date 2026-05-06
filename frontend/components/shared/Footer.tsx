@@ -14,48 +14,51 @@ export default function Footer() {
   }
 
   return (
-    <footer className="mt-5 pt-4 border-top bg-white">
+    <footer className="mt-5 pt-5 border-top text-white-50" style={{ backgroundColor: '#1E1915' }}>
       <div className="container">
-        <div className="row text-muted small pb-4">
-          <div className="col-md-4 mb-3">
+        <div className="row small pb-5">
+          <div className="col-md-5 mb-4 mb-md-0">
             <div className="d-flex align-items-center gap-2 mb-3">
-              <img src="/logo.jpg" alt="FindSalon Logo" className="rounded-circle" style={{ width: '32px', height: '32px', objectFit: 'cover' }} />
-              <h5 className="text-dark fw-bold mb-0">FindSalon</h5>
+              <img src="/logo.jpg" alt="FindSalon Logo" className="rounded-circle" style={{ width: '40px', height: '40px', objectFit: 'cover' }} />
+              <h5 className="text-white fw-bold mb-0">FindSalon</h5>
             </div>
-            <p className="pe-md-4">Redefining the beauty booking experience through curated elegance and strict selection.</p>
+            <p className="pe-md-5 opacity-75" style={{ lineHeight: '1.6' }}>Redefining the beauty booking experience through curated elegance and selection.</p>
           </div>
-          <div className="col-md-2 mb-3">
-            <h6 className="text-dark fw-bold mb-3">Company</h6>
+          
+          <div className="col-6 col-md-2 mb-4 mb-md-0">
+            <h6 className="text-white fw-bold mb-3">Company</h6>
             <ul className="list-unstyled">
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">About</Link></li>
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">Careers</Link></li>
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">Press</Link></li>
+              <li className="mb-2"><Link href="/#about" className="text-white-50 text-decoration-none hover-white transition-all">About</Link></li>
             </ul>
           </div>
-          <div className="col-md-3 mb-3">
-            <h6 className="text-dark fw-bold mb-3">Partnerships</h6>
+
+          <div className="col-6 col-md-3 mb-4 mb-md-0">
+            <h6 className="text-white fw-bold mb-3">Salon Partnership</h6>
             <ul className="list-unstyled">
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">Salon Partnership</Link></li>
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">Brand Ambassadors</Link></li>
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">Affiliates</Link></li>
+              <li className="mb-2"><Link href="/register?role=OWNER" className="text-white-50 text-decoration-none hover-white transition-all">Register Business</Link></li>
             </ul>
           </div>
-          <div className="col-md-3 mb-3">
-            <h6 className="text-dark fw-bold mb-3">Support</h6>
+
+          <div className="col-12 col-md-2">
+            <h6 className="text-white fw-bold mb-3">Support</h6>
             <ul className="list-unstyled">
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">Help Center</Link></li>
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">Contact Us</Link></li>
-              <li className="mb-2"><Link href="/" className="text-muted text-decoration-none">Cancellation Policy</Link></li>
+              <li className="mb-2"><Link href="/contact" className="text-white-50 text-decoration-none hover-white transition-all">Contact Us</Link></li>
             </ul>
           </div>
         </div>
-        <div className="text-center pt-4 pb-4 border-top text-muted small d-flex flex-column flex-md-row justify-content-between align-items-center">
-          <p className="mb-2 mb-md-0">© 2026 FindSalon. The Tactile Curator.</p>
-          <div className="fw-medium" style={{ letterSpacing: '1px', fontSize: '0.7rem' }}>
+        
+        <div className="text-center pt-4 pb-5 border-top border-secondary border-opacity-10 text-white-50 small d-flex flex-column flex-md-row justify-content-between align-items-center">
+          <p className="mb-2 mb-md-0 opacity-50">© 2026 FindSalon. The Tactile Curator.</p>
+          <div className="fw-bold letter-spaced opacity-50" style={{ fontSize: '0.65rem' }}>
             MONROVIA | LIBERIA
           </div>
         </div>
       </div>
+      <style jsx>{`
+        .hover-white:hover { color: #fff !important; }
+        .transition-all { transition: all 0.3s ease; }
+        .letter-spaced { letter-spacing: 2px; }
+      `}</style>
     </footer>
   );
 }
