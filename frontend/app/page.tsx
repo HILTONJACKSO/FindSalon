@@ -428,9 +428,25 @@ export default function Home() {
         <section className="container mt-5 pt-5">
           <div className="bg-white rounded-5 p-5 shadow-sm border border-opacity-10">
             <p className="text-rust text-uppercase fw-bold mb-1" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Proximity search</p>
-            <div className="d-flex justify-content-between align-items-end mb-4">
-              <h2 className="fw-bold mb-0 display-6">Salons Near You</h2>
-              <Link href="/salons" className="text-rust text-decoration-none fw-bold small letter-spaced">VIEW MAP</Link>
+            <div className="d-flex flex-wrap justify-content-between align-items-end mb-4">
+              <div>
+                <h2 className="fw-bold mb-0 display-6">Salons Near You</h2>
+                {userLocation && (
+                  <p className="text-muted small mt-1 mb-0">
+                    Your Location: <span className="text-rust fw-bold">{userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}</span>
+                  </p>
+                )}
+              </div>
+              <div className="d-flex gap-3 align-items-center">
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="btn btn-outline-rust btn-sm rounded-pill px-3 fw-bold"
+                  style={{ fontSize: '0.75rem' }}
+                >
+                  <FiClock className="me-1" /> REFRESH LOCATION
+                </button>
+                <Link href="/salons" className="text-rust text-decoration-none fw-bold small letter-spaced">VIEW MAP</Link>
+              </div>
             </div>
             <div className="row g-4 mt-2">
               {nearbySalons.map((salon) => {
