@@ -18,6 +18,60 @@ const FadeIn = ({ children }: { children: React.ReactNode }) => (
   </motion.div>
 );
 
+const SectionCarousel = ({ children, title, subtitle, badgeIcon, badgeText, viewAllLink, viewAllText = "VIEW ALL" }: any) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollTo = direction === 'left' ? scrollLeft - clientWidth * 0.8 : scrollLeft + clientWidth * 0.8;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <section className="container mt-5 pt-5">
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
+        <div>
+          {badgeText && (
+            <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
+              {badgeIcon}
+              <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>{badgeText}</span>
+            </div>
+          )}
+          <h2 className="display-5 fw-bold font-serif-italic mb-2">{title}</h2>
+          {subtitle && <p className="text-muted mb-0 lead opacity-75" style={{ maxWidth: '600px', fontSize: '1rem' }}>{subtitle}</p>}
+        </div>
+        <div className="d-flex align-items-center gap-3">
+          <div className="d-flex gap-2">
+            <button onClick={() => scroll('left')} className="btn btn-outline-rust rounded-circle p-0 d-flex align-items-center justify-content-center transition-all hover-scale" style={{ width: '48px', height: '48px' }}>
+              <FiChevronRight size={24} style={{ transform: 'rotate(180deg)' }} />
+            </button>
+            <button onClick={() => scroll('right')} className="btn btn-rust rounded-circle p-0 d-flex align-items-center justify-content-center transition-all hover-scale shadow-sm" style={{ width: '48px', height: '48px' }}>
+              <FiChevronRight size={24} />
+            </button>
+          </div>
+          {viewAllLink && (
+            <Link href={viewAllLink} className="btn btn-dark rounded-pill px-4 py-2 fw-bold small letter-spaced d-flex align-items-center gap-2 transition-all hover-scale shadow-sm ms-2">
+               {viewAllText} <FiArrowRight size={16} />
+            </Link>
+          )}
+        </div>
+      </div>
+      
+      <div className="position-relative">
+        <div 
+          ref={scrollRef}
+          className="d-flex gap-4 overflow-auto scrollbar-none pb-4 px-2"
+          style={{ scrollSnapType: 'x mandatory', scrollBehavior: 'smooth' }}
+        >
+          {children}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export default function Home() {
   const [curatedSalons, setCuratedSalons] = useState<any[]>([]);
   const [nearbySalons, setNearbySalons] = useState<any[]>([]);
@@ -61,11 +115,11 @@ export default function Home() {
         setCuratedSalons(salonsData);
         setFeaturedServices(servicesData);
         setTickerServices(tickerData);
-        setLookbookItems(portfolioData.slice(0, 3));
+        setLookbookItems(portfolioData);
 
         // Filter Independent Pros
         const independent = allSalonsData.filter((s: any) => s.salon_type === 'INDEPENDENT');
-        setIndependentPros(independent.slice(0, 3));
+        setIndependentPros(independent);
 
         if (userLocation && allSalonsData.length > 0) {
           const sorted = [...allSalonsData].sort((a, b) => {
@@ -73,9 +127,9 @@ export default function Home() {
             const distB = calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(b.latitude), parseFloat(b.longitude));
             return distA - distB;
           });
-          setNearbySalons(sorted.slice(0, 3));
+          setNearbySalons(sorted);
         } else {
-          setNearbySalons(allSalonsData.slice(0, 3));
+          setNearbySalons(allSalonsData);
         }
       } catch (err) {
         console.error("Failed to fetch homepage data", err);
@@ -274,316 +328,224 @@ export default function Home() {
         </div>
       )}
 
-      {/* QUICK BROWSE SECTION - REDESIGNED BENTO CATEGORIES */}
-      <section className="container mt-5 pt-4">
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
-          <div>
-            <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
-              <FiTarget size={14} />
-              <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>Quick Browse</span>
+      {/* QUICK BROWSE SECTION - REDESIGNED BENTO CATEGORIES CAROUSEL */}
+      <SectionCarousel 
+        title="Explore Categories" 
+        badgeText="Quick Browse" 
+        badgeIcon={<FiTarget size={14} />}
+        viewAllLink="/services"
+      >
+        {featuredServices.length > 0 ? (
+          Array.from(new Set(featuredServices.map(s => s.category_name?.toLowerCase()))).map((catName, idx) => {
+            const categoryIcon = catName?.includes('hair') ? <FiScissors size={20} /> : 
+                                catName?.includes('face') ? <FiSmile size={20} /> : 
+                                catName?.includes('spa') ? <MdSpa size={20} /> : 
+                                catName?.includes('tattoo') ? <FiZap size={20} /> : <FiTag size={20} />;
+            
+            return (
+              <div className="flex-shrink-0" key={idx} style={{ width: '180px', scrollSnapAlign: 'start' }}>
+                <Link href={`/salons?category=${catName}`} className="text-decoration-none">
+                  <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up border border-light" style={{ height: '160px', background: '#FDF9F0' }}>
+                    <div className="w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-center">
+                      <div className="text-rust mb-3 transition-all group-hover-scale" style={{ opacity: 0.8 }}>
+                        {categoryIcon}
+                      </div>
+                      <p className="fw-bold text-dark mb-1 small text-uppercase letter-spaced" style={{ fontSize: '0.7rem', letterSpacing: '1.5px' }}>{catName}</p>
+                      <div className="position-absolute bottom-0 mb-3 transition-all opacity-0 group-hover-opacity-100 translate-y-2 group-hover-translate-y-0">
+                        <span className="tiny fw-bold text-rust" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>EXPLORE</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            );
+          })
+        ) : (
+          [1, 2, 3, 4, 5, 6].map((i) => (
+            <div className="flex-shrink-0 text-center opacity-50" key={i} style={{ width: '180px' }}>
+              <div className="service-icon-circle mx-auto mb-3 bg-light"></div>
+              <div className="bg-light h-2 w-75 mx-auto rounded"></div>
             </div>
-            <h2 className="display-5 fw-bold font-serif-italic mb-0">Explore Categories</h2>
+          ))
+        )}
+      </SectionCarousel>
+
+      {/* ELITE MOBILE ARTISTS - CAROUSEL */}
+      {independentPros.length > 0 && (
+        <FadeIn>
+          <SectionCarousel 
+            title="Elite Mobile Artists" 
+            subtitle="The best independent beauty professionals, delivered directly to your doorstep."
+            badgeText="On-Demand Beauty" 
+            badgeIcon={<FiStar size={14} />}
+            viewAllLink="/salons?type=INDEPENDENT"
+          >
+            {independentPros.map((pro) => (
+              <div className="flex-shrink-0" key={pro.id} style={{ width: '380px', scrollSnapAlign: 'start' }}>
+                <Link href={`/salons/${pro.id}`} className="text-decoration-none">
+                  <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up" style={{ height: '400px' }}>
+                    <img 
+                      src={getImageUrl(pro.cover_image || pro.images?.[0]?.image)} 
+                      className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium"
+                      alt={pro.name}
+                    />
+                    <div className="position-absolute bottom-0 start-0 w-100 p-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
+                      <div className="d-flex justify-content-between align-items-end">
+                        <div>
+                          <h4 className="text-white fw-bold mb-1">{pro.name}</h4>
+                          <p className="text-white text-opacity-70 small mb-0 d-flex align-items-center gap-2">
+                             <FiMapPin size={12} className="text-rust" /> {pro.address}
+                          </p>
+                        </div>
+                        <div className="bg-white bg-opacity-20 text-white px-3 py-1 rounded-pill fw-bold" style={{ fontSize: '0.7rem', backdropFilter: 'blur(10px)' }}>
+                           MOBILE ARTIST
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </SectionCarousel>
+        </FadeIn>
+      )}
+
+      {/* STYLE LOOKBOOK - CAROUSEL */}
+      <FadeIn>
+        <SectionCarousel 
+          title="The Style Lookbook" 
+          subtitle="Book the exact style you want, directly from the artisans who created them."
+          badgeText="Visual Booking" 
+          badgeIcon={<MdOutlineRemoveRedEye size={14} />}
+          viewAllLink="/lookbook"
+          viewAllText="EXPLORE ALL LOOKS"
+        >
+          {lookbookItems.map((look) => (
+            <div className="flex-shrink-0" key={look.id} style={{ width: '380px', scrollSnapAlign: 'start' }}>
+              <div 
+                onClick={() => router.push('/lookbook')}
+                className="position-relative overflow-hidden rounded-5 cursor-pointer group shadow-sm transition-all hover-translate-up"
+                style={{ height: '500px' }}
+              >
+                <img 
+                  src={getImageUrl(look.image || look.img)} 
+                  className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium" 
+                  alt={look.title} 
+                />
+                <div className="position-absolute bottom-0 start-0 w-100 h-100 transition-all group-hover-bg-black-20" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)' }}></div>
+                <div className="position-absolute bottom-0 start-0 w-100 p-4">
+                  <div className="glass-card p-4 rounded-4 border border-white border-opacity-10 shadow-lg transition-all group-hover-translate-up" style={{ background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(12px)' }}>
+                    <h4 className="text-white fw-bold mb-1">{look.title}</h4>
+                    <p className="text-white text-opacity-70 small mb-3">by {look.salon_name || look.salon}</p>
+                    <div className="btn btn-white btn-sm rounded-pill px-4 fw-bold text-dark opacity-0 group-hover-opacity-100 transition-all" style={{ fontSize: '0.7rem' }}>
+                      BOOK THIS STYLE
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </SectionCarousel>
+      </FadeIn>
+
+      {/* FEATURED TREATMENTS - CAROUSEL */}
+      <SectionCarousel 
+        title="Featured Treatments" 
+        badgeText="Trending now" 
+        badgeIcon={<FiZap size={14} />}
+        viewAllLink="/services"
+        viewAllText="SEE MENU"
+      >
+        {featuredServices.map((srv) => (
+          <div className="flex-shrink-0" key={srv.id} style={{ width: '320px', scrollSnapAlign: 'start' }}>
+            <Link href={`/salons/${srv.salon}`} className="text-decoration-none">
+              <div className="position-relative bg-white rounded-5 shadow-sm border border-opacity-10 overflow-hidden h-100 transition-all hover-translate-up hover-shadow-xl group">
+                <div className="position-relative overflow-hidden" style={{ height: '240px' }}>
+                  <img 
+                    src={getImageUrl(srv.image)} 
+                    className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium" 
+                    alt={srv.name} 
+                  />
+                  <div className="position-absolute top-0 end-0 m-3 glass-card px-3 py-2 rounded-pill fw-bold text-dark shadow-sm" style={{ fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                    ${srv.price}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <h5 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-0.5px' }}>{srv.name}</h5>
+                    <div className="d-flex align-items-center gap-1 text-warning fw-bold small">
+                      <FiStar size={14} style={{ fill: 'currentColor' }} /> 
+                      <span className="text-dark">{srv.salon_rating || '5.0'}</span>
+                    </div>
+                  </div>
+                  <p className="text-rust small fw-bold mb-4 opacity-80" style={{ fontSize: '0.65rem', letterSpacing: '1.2px' }}>
+                    {srv.salon_name?.toUpperCase()}
+                  </p>
+                  <div className="d-flex align-items-center justify-content-between pt-3 border-top border-opacity-10">
+                    <div className="d-flex align-items-center gap-2 text-muted tiny fw-bold text-uppercase letter-spaced">
+                      <FiClock size={14} className="text-rust" /> {srv.duration} MIN
+                    </div>
+                    <div className="d-flex align-items-center gap-2 text-muted tiny fw-bold text-uppercase letter-spaced">
+                      <FiTag size={14} className="text-rust" /> {srv.category_name}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </div>
-          <Link href="/services" className="btn btn-outline-rust rounded-pill px-4 py-2 fw-bold small letter-spaced transition-all hover-bg-rust hover-text-white">
-            VIEW ALL
-          </Link>
-        </div>
-        
-        <div className="row g-4 mt-2">
-          {featuredServices.length > 0 ? (
-            // Group by unique category name
-            Array.from(new Set(featuredServices.map(s => s.category_name?.toLowerCase()))).slice(0, 6).map((catName, idx) => {
-              const srv = featuredServices.find(s => s.category_name?.toLowerCase() === catName);
-              if (!srv) return null;
+        ))}
+      </SectionCarousel>
 
-              const categoryImages: { [key: string]: string } = {};
+      {/* SALONS NEAR YOU - CAROUSEL */}
+      {nearbySalons.length > 0 && (
+        <FadeIn>
+          <SectionCarousel 
+            title="Salons Near You" 
+            badgeText="Proximity search" 
+            badgeIcon={<FiMapPin size={14} />}
+            viewAllLink="/salons"
+            viewAllText="VIEW ON MAP"
+          >
+            {nearbySalons.map((salon) => {
+              const distance = userLocation ? calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(salon.latitude), parseFloat(salon.longitude)) : null;
+              const salonImage = getImageUrl(salon.images?.[0]?.image || salon.cover_image);
               
-              const categoryIcon = catName?.includes('hair') ? <FiScissors size={20} /> : 
-                                  catName?.includes('face') ? <FiSmile size={20} /> : 
-                                  catName?.includes('spa') ? <MdSpa size={20} /> : 
-                                  catName?.includes('tattoo') ? <FiZap size={20} /> : <FiTag size={20} />;
-              
-              const bgImg = getImageUrl(categoryImages[catName || '']);
-
               return (
-                <div className="col-6 col-md-4 col-lg-2" key={idx}>
-                  <Link href={`/salons?category=${catName}`} className="text-decoration-none">
-                    <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up border border-light" style={{ height: '160px', background: '#FDF9F0' }}>
-                      {/* Premium Tactile Content */}
-                      <div className="w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-center">
-                        <div className="text-rust mb-3 transition-all group-hover-scale" style={{ opacity: 0.8 }}>
-                          {categoryIcon}
+                <div className="flex-shrink-0" key={salon.id} style={{ width: '400px', scrollSnapAlign: 'start' }}>
+                  <Link href={`/salons/${salon.id}`} className="text-decoration-none">
+                    <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up" style={{ height: '320px' }}>
+                      <img 
+                        src={salonImage} 
+                        className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium"
+                        alt={salon.name}
+                      />
+                      <div className="position-absolute bottom-0 start-0 w-100 p-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
+                        <div className="d-flex justify-content-between align-items-end">
+                          <div>
+                            <h4 className="text-white fw-bold mb-1">{salon.name}</h4>
+                            <p className="text-white text-opacity-70 small mb-0 d-flex align-items-center gap-1">
+                              <FiMapPin size={12} className="text-rust" /> {salon.address}
+                            </p>
+                          </div>
+                          {distance !== null && (
+                            <div className="bg-rust text-white px-3 py-1 rounded-pill fw-bold shadow-sm" style={{ fontSize: '0.7rem', backdropFilter: 'blur(5px)' }}>
+                               {formatDistance(distance)} AWAY
+                            </div>
+                          )}
                         </div>
-                        <p className="fw-bold text-dark mb-1 small text-uppercase letter-spaced" style={{ fontSize: '0.7rem', letterSpacing: '1.5px' }}>{catName}</p>
-                        
-                        <div className="position-absolute bottom-0 mb-3 transition-all opacity-0 group-hover-opacity-100 translate-y-2 group-hover-translate-y-0">
-                          <span className="tiny fw-bold text-rust" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>EXPLORE</span>
-                        </div>
+                      </div>
+                      <div className="position-absolute top-0 start-0 m-4">
+                         <div className="bg-white bg-opacity-90 backdrop-blur rounded-pill px-2 py-1 shadow-sm d-flex align-items-center">
+                            <FiStar className="text-warning me-1" style={{ fill: 'currentColor' }} />
+                            <span className="fw-bold small text-dark">{salon.rating || '5.0'}</span>
+                         </div>
                       </div>
                     </div>
                   </Link>
                 </div>
               );
-            })
-          ) : (
-            [1, 2, 3, 4, 5, 6].map((i) => (
-              <div className="col text-center opacity-50" key={i}>
-                <div className="service-icon-circle mx-auto mb-3 bg-light"></div>
-                <div className="bg-light h-2 w-75 mx-auto rounded"></div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-
-
-
-
-      {/* ELITE MOBILE ARTISTS SECTION */}
-      {independentPros.length > 0 && (
-        <FadeIn>
-          <section className="container mt-5 pt-5">
-            <div className="bg-dark rounded-5 p-5 text-white overflow-hidden position-relative">
-              <div className="position-absolute top-0 end-0 p-5 opacity-10">
-                <FiScissors size={200} />
-              </div>
-              
-              <div className="position-relative" style={{ zIndex: 1 }}>
-                <p className="text-rust text-uppercase fw-bold mb-2 small letter-spaced">At Your Door</p>
-                <h2 className="fw-bold mb-2 display-5 font-serif-italic text-white">Elite Mobile Artists</h2>
-                <p className="text-white-50 mb-5 lead opacity-75" style={{ maxWidth: '600px' }}>Skip the commute. Experience luxury beauty treatments in the comfort of your own home with our hand-picked independent professionals.</p>
-                
-                <div className="row g-4">
-                  {independentPros.map((pro) => (
-                    <div className="col-lg-4" key={pro.id}>
-                      <div 
-                        onClick={() => router.push(`/salons/${pro.id}`)}
-                        className="bg-white bg-opacity-10 backdrop-blur rounded-4 p-4 h-100 transition-all hover-translate-up cursor-pointer border border-white border-opacity-10"
-                      >
-                        <div className="d-flex align-items-center mb-4">
-                          <img 
-                            src={getImageUrl(pro.cover_image)} 
-                            className="rounded-circle object-fit-cover shadow-sm border border-white border-opacity-20"
-                            style={{ width: '70px', height: '70px' }}
-                            alt={pro.name}
-                          />
-                          <div className="ms-3">
-                            <h5 className="fw-bold text-white mb-1">{pro.name}</h5>
-                            <div className="d-flex align-items-center text-rust small fw-bold">
-                              <FiStar className="me-1 fill-rust" size={12} /> {pro.rating || '5.0'} · Independent
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <p className="text-white-50 small mb-4 line-clamp-2">{pro.description || "Expert beauty services delivered directly to your doorstep with meticulous attention to detail."}</p>
-                        
-                        <div className="d-flex align-items-center justify-content-between pt-3 border-top border-white border-opacity-10">
-                          <span className="text-white fw-bold">From ${pro.min_price || '20'}</span>
-                          <div className="btn btn-rust btn-sm rounded-pill px-3 fw-bold">Quick Book</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-        </FadeIn>
-      )}
-      {/* STYLE LOOKBOOK - REDESIGNED VISUAL DISCOVERY */}
-      <FadeIn>
-        <section className="container mt-5 pt-5">
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
-            <div>
-              <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
-                <MdOutlineRemoveRedEye size={14} />
-                <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>Visual Booking</span>
-              </div>
-              <h2 className="display-5 fw-bold font-serif-italic mb-2">The Style Lookbook</h2>
-              <p className="text-muted mb-0 lead opacity-75" style={{ maxWidth: '500px', fontSize: '1rem' }}>Book the exact style you want, directly from the artisans who created them.</p>
-            </div>
-            <Link href="/lookbook" className="btn btn-dark rounded-pill px-4 py-2 fw-bold small letter-spaced d-flex align-items-center gap-2 transition-all hover-scale shadow-sm">
-              EXPLORE ALL LOOKS <FiArrowRight size={16} />
-            </Link>
-          </div>
-          
-          <div className="row g-4 mt-2">
-            {lookbookItems.map((look, idx) => (
-              <div className="col-md-4" key={look.id}>
-                <div 
-                  onClick={() => router.push('/lookbook')}
-                  className="position-relative overflow-hidden rounded-5 cursor-pointer group shadow-sm transition-all hover-translate-up"
-                  style={{ height: '500px' }}
-                >
-                  <img 
-                    src={getImageUrl(look.image || look.img)} 
-                    className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium" 
-                    alt={look.title} 
-                  />
-                  
-                  {/* Subtle Gradient Overlay */}
-                  <div className="position-absolute bottom-0 start-0 w-100 h-100 transition-all group-hover-bg-black-20" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)' }}></div>
-
-                  {/* Glassmorphism Title Card */}
-                  <div className="position-absolute bottom-0 start-0 w-100 p-4">
-                    <div className="glass-card p-4 rounded-4 border border-white border-opacity-10 shadow-lg transition-all group-hover-translate-up" style={{ background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(12px)' }}>
-                      <h4 className="text-white fw-bold mb-1">{look.title}</h4>
-                      <p className="text-white text-opacity-70 small mb-3">by {look.salon_name || look.salon}</p>
-                      <div className="btn btn-white btn-sm rounded-pill px-4 fw-bold text-dark opacity-0 group-hover-opacity-100 transition-all" style={{ fontSize: '0.7rem' }}>
-                        BOOK THIS STYLE
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </FadeIn>
-
-
-
-      {/* FEATURED TREATMENTS - REDESIGNED HIGHLIGHTS */}
-      <section className="container mt-5 pt-5">
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
-          <div>
-            <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
-              <FiZap size={14} />
-              <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>Trending now</span>
-            </div>
-            <h2 className="display-5 fw-bold font-serif-italic mb-0">Featured Treatments</h2>
-          </div>
-          <Link href="/services" className="btn btn-outline-rust rounded-pill px-4 py-2 fw-bold small letter-spaced transition-all hover-bg-rust hover-text-white">
-            SEE MENU
-          </Link>
-        </div>
-
-        <div className="row g-4 mt-2">
-            {featuredServices.slice(0, 4).map((srv) => (
-                <div key={srv.id} className="col-12 col-md-6 col-xl-3">
-                    <Link href={`/salons/${srv.salon}`} className="text-decoration-none">
-                        <div className="position-relative bg-white rounded-5 shadow-sm border border-opacity-10 overflow-hidden h-100 transition-all hover-translate-up hover-shadow-xl group">
-                            {/* Image with Glass Price Tag */}
-                            <div className="position-relative overflow-hidden" style={{ height: '240px' }}>
-                                <img 
-                                  src={getImageUrl(srv.image)} 
-                                  className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium" 
-                                  alt={srv.name} 
-                                />
-                                <div className="position-absolute top-0 end-0 m-3 glass-card px-3 py-2 rounded-pill fw-bold text-dark shadow-sm" style={{ fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                    ${srv.price}
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <div className="p-4">
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-0.5px' }}>{srv.name}</h5>
-                                    <div className="d-flex align-items-center gap-1 text-warning fw-bold small">
-                                        <FiStar size={14} style={{ fill: 'currentColor' }} /> 
-                                        <span className="text-dark">{srv.salon_rating || '5.0'}</span>
-                                    </div>
-                                </div>
-                                
-                                <p className="text-rust small fw-bold mb-4 opacity-80" style={{ fontSize: '0.65rem', letterSpacing: '1.2px' }}>
-                                  {srv.salon_name?.toUpperCase()}
-                                </p>
-
-                                <div className="d-flex align-items-center justify-content-between pt-3 border-top border-opacity-10">
-                                    <div className="d-flex align-items-center gap-2 text-muted tiny fw-bold text-uppercase letter-spaced">
-                                        <FiClock size={14} className="text-rust" /> {srv.duration} MIN
-                                    </div>
-                                    <div className="d-flex align-items-center gap-2 text-muted tiny fw-bold text-uppercase letter-spaced">
-                                        <FiTag size={14} className="text-rust" /> {srv.category_name}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </Link>
-                </div>
-            ))}
-        </div>
-      </section>
-
-      {/* SALONS NEAR YOU */}
-      {/* SALONS NEAR YOU - REDESIGNED PROXIMITY SEARCH */}
-      {nearbySalons.length > 0 && (
-        <FadeIn>
-          <section id="proximity" className="container mt-5 pt-5 mb-5">
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
-              <div>
-                <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
-                  <FiMapPin size={14} />
-                  <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>Proximity search</span>
-                </div>
-                <h2 className="display-5 fw-bold font-serif-italic mb-2">Salons Near You</h2>
-                <div className="d-flex align-items-center gap-3">
-                  <div className="glass-pill px-3 py-2 rounded-pill border border-dark border-opacity-10 d-flex align-items-center gap-2" style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(10px)' }}>
-                    <div className={`rounded-circle ${userLocation ? 'bg-success' : 'bg-warning'}`} style={{ width: '8px', height: '8px' }}></div>
-                    <span className="tiny fw-bold text-muted text-uppercase letter-spaced" style={{ fontSize: '0.6rem' }}>
-                      {userLocation ? `LIVE LOCATION: ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}` : 'Location Access Required'}
-                    </span>
-                  </div>
-                  <button 
-                    onClick={() => window.location.reload()} 
-                    className="btn btn-link text-decoration-none text-rust p-0 small fw-bold d-flex align-items-center gap-1 hover-underline"
-                  >
-                    <FiClock size={14} /> REFRESH
-                  </button>
-                </div>
-              </div>
-              <Link href="/salons" className="btn btn-dark rounded-pill px-4 py-3 fw-bold d-flex align-items-center gap-2 shadow-sm transition-all hover-scale">
-                 <FiNavigation size={18} /> VIEW ON MAP
-              </Link>
-            </div>
-
-            <div className="row g-4">
-              {nearbySalons.map((salon) => {
-                const distance = userLocation ? calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(salon.latitude), parseFloat(salon.longitude)) : null;
-                const salonImage = getImageUrl(salon.images?.[0]?.image || salon.cover_image);
-                
-                return (
-                  <div key={salon.id} className="col-md-6 col-lg-4">
-                    <Link href={`/salons/${salon.id}`} className="text-decoration-none">
-                      <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up" style={{ height: '320px' }}>
-                        <img 
-                          src={salonImage} 
-                          className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium"
-                          alt={salon.name}
-                        />
-                        
-                        {/* Gradient Overlay */}
-                        <div className="position-absolute bottom-0 start-0 w-100 p-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
-                          <div className="d-flex justify-content-between align-items-end">
-                            <div>
-                              <h4 className="text-white fw-bold mb-1">{salon.name}</h4>
-                              <p className="text-white text-opacity-70 small mb-0 d-flex align-items-center gap-1">
-                                <FiMapPin size={12} className="text-rust" /> {salon.address}
-                              </p>
-                            </div>
-                            {distance !== null && (
-                              <div className="bg-rust text-white px-3 py-1 rounded-pill fw-bold shadow-sm" style={{ fontSize: '0.7rem', backdropFilter: 'blur(5px)' }}>
-                                 {formatDistance(distance)} AWAY
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Top Badges */}
-                        <div className="position-absolute top-0 start-0 m-4">
-                           <div className="bg-white bg-opacity-90 backdrop-blur rounded-pill px-2 py-1 shadow-sm d-flex align-items-center">
-                              <FiStar className="text-warning me-1" style={{ fill: 'currentColor' }} />
-                              <span className="fw-bold small text-dark">{salon.rating || '5.0'}</span>
-                           </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+            })}
+          </SectionCarousel>
         </FadeIn>
       )}
 
@@ -1066,6 +1028,9 @@ export default function Home() {
         </div>
       </section>
       <style jsx>{`
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+
         input::placeholder { color: #A0968F; font-weight: 400; }
         .hover-card-premium { position: relative; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .hover-card-premium:hover { transform: translateY(-12px); box-shadow: 0 30px 60px -12px rgba(30, 25, 21, 0.15) !important; border-color: rgba(156, 74, 52, 0.2) !important; }
