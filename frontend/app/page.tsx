@@ -39,7 +39,7 @@ const SectionCarousel = ({ children, title, subtitle, badgeIcon, badgeText, view
               <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>{badgeText}</span>
             </div>
           )}
-          <h2 className="display-5 fw-bold font-serif-italic mb-2">{title}</h2>
+          <h2 className="fw-bold mb-2" style={{ letterSpacing: '-1px' }}>{title}</h2>
           {subtitle && <p className="text-muted mb-0 lead opacity-75" style={{ maxWidth: '600px', fontSize: '1rem' }}>{subtitle}</p>}
         </div>
         <div className="d-flex align-items-center justify-content-between justify-content-md-end gap-3 w-100 w-md-auto">
@@ -83,17 +83,6 @@ export default function Home() {
 
   const router = useRouter();
 
-  const [searchState, setSearchState] = useState({
-    location: '',
-    service: ''
-  });
-
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchState.service) params.set('search', searchState.service);
-    if (searchState.location) params.set('location', searchState.location);
-    router.push(`/salons?${params.toString()}`);
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -180,25 +169,18 @@ export default function Home() {
                   Experience the world's most premium salon curated network. Every touchpoint designed for your sophisticated lifestyle.
                 </p>
 
-                {/* Search Bar / CTA - Responsive Stacking */}
-                <div className="search-pill-luxury d-flex flex-column flex-md-row align-items-stretch align-items-md-center shadow-xl bg-white p-2 rounded-4 rounded-md-pill border border-light transition-all cursor-pointer mx-auto mx-lg-0" style={{ maxWidth: '550px' }}>
-                  <div className="flex-grow-1 px-4 py-3 py-md-2 text-start d-flex align-items-center gap-3">
-                    <FiSearch className="text-rust" size={20} />
-                    <div className="flex-grow-1">
-                      <span className="d-block text-uppercase mb-0 opacity-50 fw-bold" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>What service?</span>
-                      <input type="text" placeholder="Hair, Nails, Spa..." className="border-0 bg-transparent w-100 fw-bold outline-none" style={{ fontSize: '0.9rem' }} />
+                {/* Flagship CTA - Replaces Search Inputs */}
+                <Link href="/salons" className="text-decoration-none">
+                  <div className="search-pill-luxury d-flex align-items-center shadow-sm bg-white p-2 rounded-pill border border-light transition-all hover-card-premium cursor-pointer mx-auto mx-lg-0" style={{ maxWidth: '400px' }}>
+                    <div className="flex-grow-1 px-4 py-2 text-start">
+                      <span className="d-block text-uppercase mb-0 opacity-50 fw-bold" style={{ fontSize: '0.65rem', letterSpacing: '1px', color: '#5D2E17' }}>Explore Now</span>
+                      <span className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>Browse All Salons</span>
+                    </div>
+                    <div className="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale shadow-sm ms-2" style={{ width: '48px', height: '48px', background: '#F4E7D3', color: '#B45309', flexShrink: 0 }}>
+                      <FiSearch size={20} />
                     </div>
                   </div>
-                  <div className="d-none d-md-block" style={{ width: '1px', height: '30px', background: 'rgba(0,0,0,0.05)' }}></div>
-                  <div className="flex-grow-1 px-4 py-3 py-md-2 text-start d-flex align-items-center gap-3">
-                    <FiMapPin className="text-rust" size={20} />
-                    <div className="flex-grow-1">
-                      <span className="d-block text-uppercase mb-0 opacity-50 fw-bold" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>Where?</span>
-                      <input type="text" placeholder="Monrovia, LIB" className="border-0 bg-transparent w-100 fw-bold outline-none" style={{ fontSize: '0.9rem' }} />
-                    </div>
-                  </div>
-                  <button onClick={handleSearch} className="btn btn-rust rounded-pill px-5 py-3 py-md-2 fw-bold shadow-sm transition-all hover-scale ms-md-2">EXPLORE</button>
-                </div>
+                </Link>
               </motion.div>
             </div>
 
