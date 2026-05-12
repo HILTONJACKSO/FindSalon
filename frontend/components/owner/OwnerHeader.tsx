@@ -2,6 +2,7 @@
 
 import { FiSearch, FiBell, FiHelpCircle, FiCheck, FiX, FiInfo } from 'react-icons/fi';
 import { api, getImageUrl } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import { useState, useEffect, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';

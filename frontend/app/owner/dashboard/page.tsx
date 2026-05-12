@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiTrendingUp, FiCalendar, FiClock, FiUsers, FiArrowRight, FiCheck, FiMoreHorizontal, FiDatabase, FiPlus, FiImage, FiX, FiSave } from 'react-icons/fi';
 import { getImageUrl, api } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import { formatDistanceToNow } from 'date-fns';
 import OwnerHeader from '@/components/owner/OwnerHeader';
 import { motion, AnimatePresence } from 'framer-motion';
