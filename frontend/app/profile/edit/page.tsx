@@ -29,8 +29,8 @@ export default function EditProfilePage() {
     defaultValues: {
       first_name: user?.first_name || '',
       last_name: user?.last_name || '',
-      phone: user?.phone || '',
-      location: user?.location || 'Monrovia, Liberia',
+      phone: (user as any)?.phone || '',
+      location: (user as any)?.location || 'Monrovia, Liberia',
     }
   });
 
