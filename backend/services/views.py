@@ -1,4 +1,6 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Service, ServiceCategory
 from .serializers import ServiceSerializer, ServiceCategorySerializer
@@ -10,12 +12,12 @@ class IsSalonOwnerOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return request.user.is_authenticated and (request.user.role in ['OWNER', 'ADMIN'])
+        return request.user.is_authenticated and (getattr(request.user, 'role', None) in ['OWNER', 'ADMIN'])
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return obj.salon.owner == request.user or request.user.role == 'ADMIN'
+        return obj.salon.owner == request.user or getattr(request.user, 'role', None) == 'ADMIN'
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ServiceCategoryViewSet(viewsets.ModelViewSet):
@@ -32,8 +34,6 @@ class ServiceCategoryViewSet(viewsets.ModelViewSet):
         if is_mine:
             if not user.is_authenticated:
                 return ServiceCategory.objects.none()
-            if hasattr(user, 'role') and user.role == 'ADMIN':
-                return qs
             return qs.filter(salon__owner=user)
 
         if self.request.method in permissions.SAFE_METHODS:
@@ -73,8 +73,6 @@ class ServiceViewSet(viewsets.ModelViewSet):
             if not user.is_authenticated:
                 # Security: Never leak public services when 'mine' is requested
                 return Service.objects.none()
-            if hasattr(user, 'role') and user.role == 'ADMIN':
-                return qs
             return qs.filter(salon__owner=user)
 
         # 2. STANDARD FILTERING
@@ -107,3 +105,38 @@ class ServiceViewSet(viewsets.ModelViewSet):
                 })
         
         serializer.save(salon=salon)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def ticker(self, request):
+        from django.db.models import F
+        # 1. Get ALL active deals (discount_price < price)
+        deals = Service.objects.filter(
+            salon__is_approved=True, 
+            salon__is_active=True,
+            is_active=True,
+            discount_price__isnull=False,
+            discount_price__lt=F('price')
+        ).select_related('salon', 'category')[:10]
+
+        # 2. If deals < 5, fill with featured or top services
+        services_list = list(deals)
+        if len(services_list) < 5:
+            featured = Service.objects.filter(
+                salon__is_approved=True, 
+                salon__is_active=True,
+                is_active=True,
+                is_featured=True
+            ).exclude(id__in=[s.id for s in services_list]).select_related('salon', 'category')[:10 - len(services_list)]
+            services_list.extend(list(featured))
+
+        # 3. If still < 5, fill with general top services
+        if len(services_list) < 5:
+            general = Service.objects.filter(
+                salon__is_approved=True, 
+                salon__is_active=True,
+                is_active=True
+            ).exclude(id__in=[s.id for s in services_list]).select_related('salon', 'category')[:10 - len(services_list)]
+            services_list.extend(list(general))
+
+        serializer = self.get_serializer(services_list, many=True)
+        return Response(serializer.data)

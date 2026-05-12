@@ -21,7 +21,9 @@ import {
   FiGrid,
   FiBriefcase,
   FiTag,
-  FiImage
+  FiImage,
+  FiShoppingBag,
+  FiBell
 } from 'react-icons/fi';
 
 export default function OwnerLayout({
@@ -80,12 +82,14 @@ export default function OwnerLayout({
   const navItems = [
     { label: 'Dashboard', icon: <FiGrid />, path: '/owner/dashboard' },
     { label: 'Services', icon: <FiScissors />, path: '/owner/services' },
+    { label: 'Lookbook', icon: <FiImage />, path: '/owner/lookbook' },
     { label: 'Bookings', icon: <FiCalendar />, path: '/owner/bookings' },
     { label: 'Inventory', icon: <FiDatabase />, path: '/owner/inventory' },
     { label: 'Customers', icon: <FiUsers />, path: '/owner/customers' },
     { label: 'Staff', icon: <FiBriefcase />, path: '/owner/staff' },
     { label: 'Deals', icon: <FiTag />, path: '/owner/deals' },
-    { label: 'Ads & Featured', icon: <FiImage />, path: '/owner/ads' },
+    { label: 'Wholesale Supplies', icon: <FiShoppingBag />, path: '/owner/supplies' },
+    { label: 'Notifications', icon: <FiBell />, path: '/owner/notifications' },
     { label: 'Analytics', icon: <FiPieChart />, path: '/owner/analytics' },
     { label: 'Billing', icon: <FiDollarSign />, path: '/owner/billing' },
   ];
@@ -213,7 +217,7 @@ export default function OwnerLayout({
           width: 5px;
         }
         .sidebar-custom-scroll::-webkit-scrollbar-track {
-          background: #FDFBF7;
+          background: transparent;
         }
         .sidebar-custom-scroll::-webkit-scrollbar-thumb {
           background-color: rgba(156, 74, 52, 0.4);

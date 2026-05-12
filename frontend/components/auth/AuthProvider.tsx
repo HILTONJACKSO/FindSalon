@@ -28,8 +28,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             first_name: res.data.first_name,
             last_name: res.data.last_name
           }, token);
-        } catch (err) {
-          console.error("Failed to sync profile with backend", err);
+        } catch (err: any) {
+          console.error("Failed to sync profile with backend", err instanceof Error ? err.message : err);
           // If profile sync fails, we still set the auth but with default role
           setAuth({
             id: firebaseUser.uid,

@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 <div className="d-flex flex-column gap-4">
-                    {categories.map((c, i) => (
+                    {categories.map((c: any, i: number) => (
                         <div key={i} className="d-flex align-items-center justify-content-between">
                             <div className="d-flex align-items-center gap-3">
                                 <span className="rounded-circle" style={{ width: '12px', height: '12px', backgroundColor: c.color }}></span>

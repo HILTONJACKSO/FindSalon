@@ -19,7 +19,7 @@ class AnalyticsView(APIView):
         if user.role not in ['OWNER', 'ADMIN']:
             return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
             
-        salons = user.salons.all() if user.role == 'OWNER' else Salon.objects.all()
+        salons = user.salons.all()
         
         kpis = AnalyticsService.get_owner_kpis(salons)
         portfolio = AnalyticsService.get_service_portfolio(salons)
@@ -44,7 +44,7 @@ class DashboardOverviewView(APIView):
         if user.role not in ['OWNER', 'ADMIN']:
             return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
             
-        salons = user.salons.all() if user.role == 'OWNER' else Salon.objects.all()
+        salons = user.salons.all()
         data = AnalyticsService.get_dashboard_overview(salons)
         return Response(data)
 
@@ -56,22 +56,5 @@ class AdminAnalyticsView(APIView):
         if request.user.role != 'ADMIN':
             return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
             
-        # System-wide logic
-        from salons.models import Salon
-        from bookings.models import Booking
-        from accounts.models import User
-        
-        total_revenue = 0 # Placeholder for actual revenue calculation
-        # Sum up all successful payments
-        from payments.models import Payment
-        total_revenue = Payment.objects.filter(status='COMPLETED').aggregate(models.Sum('amount'))['amount__sum'] or 0
-        
-        data = {
-            "total_revenue": total_revenue,
-            "total_salons": Salon.objects.count(),
-            "pending_approvals": Salon.objects.filter(is_approved=False).count(),
-            "total_customers": User.objects.filter(role='CUSTOMER').count(),
-            "total_bookings": Booking.objects.count(),
-            "active_bookings": Booking.objects.filter(status='CONFIRMED').count(),
-        }
+        data = AnalyticsService.get_admin_overview()
         return Response(data)

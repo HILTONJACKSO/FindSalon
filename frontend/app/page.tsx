@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FiMapPin, FiSearch, FiStar, FiChevronRight, FiScissors, FiSmile, FiBook, FiCheckCircle, FiTag, FiClock } from 'react-icons/fi';
+import { FiMapPin, FiSearch, FiStar, FiChevronRight, FiScissors, FiSmile, FiBook, FiCheckCircle, FiTag, FiClock, FiLock, FiArrowRight, FiDownload, FiZap, FiTrendingUp, FiSmartphone, FiTarget, FiShield, FiUsers, FiNavigation } from 'react-icons/fi';
 import { MdOutlineFaceRetouchingNatural, MdSpa, MdOutlineRemoveRedEye } from 'react-icons/md';
 import { api, getImageUrl } from '@/lib/api';
 import { motion } from 'framer-motion';
 
 import { useLocation } from '@/hooks/useLocation';
 import { calculateDistance, formatDistance } from '@/lib/location';
+import InstallPwa from '@/components/pwa/InstallPwa';
 
 const FadeIn = ({ children }: { children: React.ReactNode }) => (
   <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
@@ -22,7 +23,8 @@ export default function Home() {
   const [nearbySalons, setNearbySalons] = useState<any[]>([]);
   const [independentPros, setIndependentPros] = useState<any[]>([]);
   const [featuredServices, setFeaturedServices] = useState<any[]>([]);
-  const [ads, setAds] = useState<any[]>([]);
+  const [tickerServices, setTickerServices] = useState<any[]>([]);
+  const [lookbookItems, setLookbookItems] = useState<any[]>([]);
   const { location: userLocation } = useLocation();
 
   const router = useRouter();
@@ -42,258 +44,301 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [salonsRes, servicesRes, allSalonsRes, adsRes] = await Promise.all([
-          api.get('/salons/curated/'),
-          api.get('/services/'),
-          api.get('/salons/'),
-          api.get('/ads/public/?placement=LANDING_PAGE')
+        const [salonsRes, servicesRes, allSalonsRes, tickerRes, portfolioRes] = await Promise.all([
+          api.get('/salons/curated/').catch(() => ({ data: [] })),
+          api.get('/services/').catch(() => ({ data: { results: [] } })),
+          api.get('/salons/').catch(() => ({ data: { results: [] } })),
+          api.get('/services/ticker/').catch(() => ({ data: [] })),
+          api.get('/salons/portfolio/').catch(() => ({ data: [] }))
         ]);
-        setCuratedSalons(salonsRes.data);
-        setFeaturedServices(servicesRes.data.results || servicesRes.data);
-        setAds(adsRes.data);
 
-        const allSalons = allSalonsRes.data.results || allSalonsRes.data;
-        
+        const salonsData = salonsRes.data || [];
+        const servicesData = servicesRes.data.results || servicesRes.data || [];
+        const allSalonsData = allSalonsRes.data.results || allSalonsRes.data || [];
+        const tickerData = tickerRes.data || [];
+        const portfolioData = portfolioRes.data.results || portfolioRes.data || [];
+
+        setCuratedSalons(salonsData);
+        setFeaturedServices(servicesData);
+        setTickerServices(tickerData);
+        setLookbookItems(portfolioData.slice(0, 3));
+
         // Filter Independent Pros
-        const independent = allSalons.filter((s: any) => s.salon_type === 'INDEPENDENT');
+        const independent = allSalonsData.filter((s: any) => s.salon_type === 'INDEPENDENT');
         setIndependentPros(independent.slice(0, 3));
 
-        if (userLocation) {
-          const sorted = [...allSalons].sort((a, b) => {
+        if (userLocation && allSalonsData.length > 0) {
+          const sorted = [...allSalonsData].sort((a, b) => {
             const distA = calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(a.latitude), parseFloat(a.longitude));
             const distB = calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(b.latitude), parseFloat(b.longitude));
             return distA - distB;
           });
           setNearbySalons(sorted.slice(0, 3));
         } else {
-          setNearbySalons(allSalons.slice(0, 3));
+          setNearbySalons(allSalonsData.slice(0, 3));
         }
       } catch (err) {
-        console.error("Failed to fetch curated data", err);
+        console.error("Failed to fetch homepage data", err);
       }
     };
     fetchData();
   }, [userLocation]);
   return (
     <>
-      {/* HERO SECTION - REFINED & SHARP */}
-      <section className="bg-sand pt-5 pb-5 mb-5" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
-        <div className="container pt-4">
-          <div className="row align-items-center">
-            <div className="col-lg-6 pe-lg-5">
+      {/* Custom SVG Blob Mask Definition */}
+      <svg width="0" height="0" style={{ position: 'absolute' }}>
+        <defs>
+          <clipPath id="blobClip" clipPathUnits="objectBoundingBox">
+            <path transform="translate(0.5, 0.5) scale(0.006) translate(-135.7, -122.15)" d="M 120.4, 53.6 C 143.2, 45.1 176.8, 62.1 190.7, 83.2 C 204.6, 104.3 211.8, 131.6 200.7, 153.6 C 189.6, 175.6 160.8, 192.1 133.6, 190.7 C 106.4, 189.3 80.8, 169.6 70.7, 153.6 C 60.6, 137.6 60.6, 104.3 70.7, 83.2 C 80.8, 62.1 106.4, 50.3 120.4, 53.6 Z" />
+          </clipPath>
+        </defs>
+      </svg>
+      {/* ELITE HERO SECTION - FLAGSHIP CREAM DESIGN */}
+      <section className="position-relative overflow-hidden pt-5 pt-lg-5" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', background: '#FDF9F0' }}>
+        {/* Subtle Grid Pattern Overlay */}
+        <div className="position-absolute w-100 h-100 opacity-20" style={{ backgroundImage: `linear-gradient(#E5D5C5 1px, transparent 1px), linear-gradient(90deg, #E5D5C5 1px, transparent 1px)`, backgroundSize: '40px 40px', zIndex: 0 }}></div>
+        
+        {/* Background Decorative Blob */}
+        <div className="position-absolute rounded-circle blur-3xl opacity-30 d-none d-md-block" style={{ width: '800px', height: '800px', background: '#F4E7D3', top: '-10%', right: '-10%', filter: 'blur(150px)', zIndex: 0 }}></div>
+
+        <div className="container position-relative pb-5 mt-4 mt-lg-5" style={{ zIndex: 1 }}>
+          <div className="row align-items-center g-5">
+            {/* Left Content */}
+            <div className="col-lg-5 text-center text-lg-start">
               <motion.div
-                initial={{ opacity: 0, x: -30 }}
+                initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <h1 className="fw-bold mb-0" style={{ fontSize: '4.5rem', lineHeight: '1.1', color: '#1E1915' }}>
-                  Your Glow, <br/>
-                  <span className="font-serif-italic text-rust" style={{ fontSize: '5rem' }}>Curated.</span>
+                <h1 className="fw-bold mb-0" style={{ fontSize: 'var(--fs-display)', lineHeight: '1.1', letterSpacing: '-2px', color: '#5D2E17' }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>Book. Arrive.</span> <br />
+                  <span className="font-serif-italic position-relative ms-0 ms-lg-0 d-inline-block" style={{ fontSize: '1.1em', fontStyle: 'italic', color: '#B45309' }}>
+                    Glow.
+                    <motion.span 
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ duration: 0.8, repeat: Infinity }}
+                      className="position-absolute ms-1 d-none d-md-block" 
+                      style={{ width: '5px', height: '80%', background: '#B45309', top: '15%', right: '-20px' }}
+                    ></motion.span>
+                  </span>
                 </h1>
-                <p className="mt-4 mb-5 text-muted" style={{ fontSize: '1.1rem', maxWidth: '400px' }}>
+                <p className="mt-4 mb-5 mx-auto mx-lg-0" style={{ fontSize: 'var(--fs-base)', lineHeight: '1.6', maxWidth: '480px', fontWeight: 400, color: '#7C4B30', opacity: 0.8 }}>
                   Discover and book the most prestigious beauty artisans in your city. Experience tactile luxury with every appointment.
                 </p>
 
-                <div className="search-pill-container mt-4" style={{ maxWidth: '600px' }}>
-                  <div className="search-pill d-flex align-items-center shadow-lg bg-white p-2 rounded-pill border border-light transition-all hover-shadow-xl">
-                    {/* Location Input */}
-                    <div className="flex-grow-1 px-4 py-2">
-                      <label className="d-block text-rust fw-bold text-uppercase mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>Where</label>
-                      <div className="d-flex align-items-center">
-                        <FiMapPin className="text-muted me-2" size={14} />
-                        <input 
-                          type="text" 
-                          placeholder="Search location..." 
-                          className="w-100 border-0 bg-transparent shadow-none" 
-                          style={{ outline: 'none', fontWeight: 600, fontSize: '0.95rem' }} 
-                          value={searchState.location}
-                          onChange={(e) => setSearchState({...searchState, location: e.target.value})}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        />
-                      </div>
+                {/* Flagship CTA - Replaces Search Inputs */}
+                <Link href="/salons" className="text-decoration-none">
+                  <div className="search-pill-luxury d-flex align-items-center shadow-sm bg-white p-2 rounded-pill border border-light transition-all hover-card-premium cursor-pointer" style={{ maxWidth: '400px' }}>
+                    <div className="flex-grow-1 px-4 py-2 text-start">
+                      <span className="d-block text-uppercase mb-0 opacity-50 fw-bold" style={{ fontSize: '0.65rem', letterSpacing: '1px', color: '#5D2E17' }}>Explore Now</span>
+                      <span className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>Browse All Salons</span>
                     </div>
-
-                    <div className="search-divider" style={{ width: '1px', height: '40px', background: '#eee' }}></div>
-
-                    {/* Service Input */}
-                    <div className="flex-grow-1 px-4 py-2">
-                      <label className="d-block text-rust fw-bold text-uppercase mb-0" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>What</label>
-                      <div className="d-flex align-items-center">
-                        <FiSearch className="text-muted me-2" size={14} />
-                        <input 
-                          type="text" 
-                          placeholder="Hair, nails, spa..." 
-                          className="w-100 border-0 bg-transparent shadow-none" 
-                          style={{ outline: 'none', fontWeight: 600, fontSize: '0.95rem' }} 
-                          value={searchState.service}
-                          onChange={(e) => setSearchState({...searchState, service: e.target.value})}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Integrated Search Button */}
-                    <button 
-                      className="btn btn-dark rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale shadow-sm ms-2"
-                      style={{ width: '48px', height: '48px', flexShrink: 0 }}
-                      onClick={handleSearch}
-                    >
+                    <div className="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale shadow-sm ms-2" style={{ width: '48px', height: '48px', background: '#F4E7D3', color: '#B45309', flexShrink: 0 }}>
                       <FiSearch size={20} />
-                    </button>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="d-flex flex-wrap align-items-center gap-4 mt-5">
-                  <div className="d-flex align-items-center text-muted">
-                    <FiCheckCircle className="text-rust me-2" />
-                    <span className="small fw-medium">Curated Artists</span>
-                  </div>
-                  <div className="d-flex align-items-center text-muted">
-                    <FiCheckCircle className="text-rust me-2" />
-                    <span className="small fw-medium">Instant Booking</span>
-                  </div>
-                  <Link 
-                    href="/#pricing" 
-                    className="text-rust fw-bold text-decoration-none d-flex align-items-center hover-translate-right"
-                    style={{ whiteSpace: 'nowrap' }}
-                  >
-                    View Partner Plans <FiChevronRight className="ms-1" />
-                  </Link>
-                </div>
-
-
+                </Link>
               </motion.div>
             </div>
-            
-            <div className="col-lg-6 mt-5 mt-lg-0">
+
+            {/* Right Visuals - Elite Organic Composition */}
+            <div className="col-lg-7 position-relative mt-4 mt-lg-0 d-flex justify-content-center align-items-center">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1 }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+                className="position-relative w-100 d-flex justify-content-center"
               >
-                <div className="position-relative">
+                {/* Traditional Rounded Image Layout */}
+                <div className="position-relative mx-auto" style={{ width: '100%', maxWidth: '650px' }}>
+                  <div className="position-absolute w-100 h-100 opacity-20 d-none d-md-block" style={{ backgroundImage: `radial-gradient(#B45309 0.5px, transparent 0.5px)`, backgroundSize: '15px 15px', zIndex: 0, top: '20px', left: '20px', borderRadius: '30px' }}></div>
                   <img 
                     src="/hero.jpg" 
-                    alt="Discover your glow" 
-                    className="rounded-4 shadow-lg w-100"
-                    style={{ height: '600px', objectFit: 'cover' }}
+                    alt="Luxury Experience" 
+                    className="img-fluid rounded-5 shadow-2xl position-relative mx-auto"
+                    style={{ zIndex: 1, width: '100%', objectFit: 'cover', minHeight: '450px' }}
                   />
                   
-                  <div className="position-absolute shadow-lg bg-white rounded-4 p-3 d-flex align-items-center" style={{ bottom: '30px', right: '30px', minWidth: '220px', zIndex: 10 }}>
-                    <div className="bg-rust rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '45px', height: '45px', color: 'white' }}>
-                      <FiStar size={20} />
+                  {/* Floating Glass Card: Verified */}
+                  <motion.div 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.8 }}
+                    className="glass-card position-absolute shadow-xl d-none d-sm-block" 
+                    style={{ top: '15%', left: '-5%', minWidth: '180px', zIndex: 20, background: 'rgba(255, 255, 255, 0.7)', border: '1px solid rgba(180, 83, 9, 0.2)', padding: '15px' }}
+                  >
+                    <div className="d-flex flex-column align-items-center text-center">
+                      <div className="d-flex gap-1 mb-2">
+                        {[1,2,3,4,5].map(s => <FiStar key={s} size={12} fill="#B45309" color="#B45309" />)}
+                      </div>
+                      <span className="tiny fw-bold" style={{ color: '#5D2E17', fontSize: '0.7rem' }}>Top Rated Stylists</span>
+                      <span className="tiny opacity-70" style={{ color: '#5D2E17', fontSize: '0.6rem' }}>Monrovia</span>
                     </div>
-                    <div>
-                      <h6 className="fw-bold mb-0">5.0 Rating</h6>
-                      <p className="text-muted small mb-0">Liberia's Finest</p>
+                  </motion.div>
+
+                  {/* Floating Glass Card: Booking */}
+                  <motion.div 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.7, duration: 0.8 }}
+                    className="glass-card position-absolute shadow-xl" 
+                    style={{ bottom: '10%', right: '-5%', minWidth: '200px', zIndex: 20, background: 'rgba(255, 255, 255, 0.7)', border: '1px solid rgba(180, 83, 9, 0.2)', padding: '12px 20px' }}
+                  >
+                    <div className="d-flex align-items-center gap-3">
+                      <div className="bg-success bg-opacity-10 p-2 rounded-circle">
+                        <FiCheckCircle className="text-success" size={16} />
+                      </div>
+                      <div className="d-flex flex-column text-start">
+                        <span className="tiny fw-bold" style={{ color: '#5D2E17', fontSize: '0.75rem' }}>Appointment Confirmed</span>
+                        <span className="tiny opacity-70" style={{ color: '#5D2E17', fontSize: '0.65rem' }}>Next slot available now</span>
+                      </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </motion.div>
             </div>
           </div>
         </div>
+
       </section>
 
+      {/* LUXURY TICKER / MARQUEE SECTION - HIGH ENERGY ORANGE-RED */}
+      {tickerServices.length > 0 && (
+        <div className="py-3 overflow-hidden position-relative" style={{ backgroundColor: '#FF4500', borderTop: '1px solid rgba(255,255,255,0.1)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <motion.div 
+            className="d-flex align-items-center gap-5"
+            animate={{ x: [0, -2000] }}
+            transition={{ 
+              duration: 45, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+            style={{ width: 'max-content' }}
+          >
+            {[...tickerServices, ...tickerServices, ...tickerServices, ...tickerServices].map((srv, idx) => (
+              <Link 
+                key={`${srv.id}-${idx}`} 
+                href={`/salons/${srv.salon}`}
+                className="text-decoration-none d-flex align-items-center gap-3 transition-all hover-translate-up"
+              >
+                {/* Modern Image Thumbnail */}
+                <div className="position-relative" style={{ width: '50px', height: '50px' }}>
+                  <img 
+                    src={getImageUrl(srv.image)} 
+                    className="w-100 h-100 object-fit-cover rounded-circle shadow-sm border border-white"
+                    style={{ borderWidth: '2.5px', borderStyle: 'solid' }}
+                    alt={srv.name}
+                  />
+                  {srv.discount_price && (
+                    <div className="position-absolute bottom-0 end-0 bg-white text-orangered rounded-circle d-flex align-items-center justify-content-center shadow-sm fw-bold" style={{ width: '18px', height: '18px', fontSize: '0.5rem', border: '1px solid #FF4500', color: '#FF4500' }}>
+                      %
+                    </div>
+                  )}
+                </div>
 
-      
-      {/* ADVERTISING GRID SECTION */}
-      {ads.length > 0 && (
-        <FadeIn>
-          <section className="container mt-5 pt-4">
-            <div className="d-flex justify-content-between align-items-end mb-4">
-              <div>
-                <p className="text-rust text-uppercase fw-bold mb-1" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Partner Spotlight</p>
-                <h2 className="fw-bold mb-0 display-6">Featured Promotions</h2>
-              </div>
-            </div>
-            
-            <div className="row g-4">
-              {ads.slice(0, 3).map((ad) => (
-                <div className="col-lg-4" key={ad.id}>
-                  <Link href={ad.link_url || `/salons/${ad.salon}`} className="text-decoration-none">
-                    <div className="bg-white rounded-5 shadow-sm border border-opacity-10 overflow-hidden h-100 transition-all hover-scale">
-                      <div className="position-relative" style={{ height: '240px' }}>
-                        <img src={getImageUrl(ad.image) || ''} className="w-100 h-100 object-fit-cover" alt={ad.title} />
-
-                        <div className="position-absolute top-0 start-0 m-3">
-                          <span className="badge bg-rust text-white rounded-pill px-3 py-1 fw-bold small shadow-sm">PROMOTED</span>
-                        </div>
+                {/* Refined Text Content */}
+                <div className="d-flex flex-column">
+                  <div className="d-flex align-items-center gap-2">
+                    <span className="fw-bold text-white letter-spaced text-uppercase mb-0" style={{ fontSize: '0.75rem', letterSpacing: '1.2px' }}>
+                      {srv.name}
+                    </span>
+                    {srv.discount_price ? (
+                      <span className="badge bg-white text-orangered rounded-pill px-2" style={{ fontSize: '0.55rem', color: '#FF4500' }}>OFFER</span>
+                    ) : (
+                      <span className="badge bg-white bg-opacity-20 text-white rounded-pill px-2" style={{ fontSize: '0.55rem' }}>POPULAR</span>
+                    )}
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <span className="text-white opacity-70 small fw-medium text-uppercase" style={{ fontSize: '0.65rem' }}>{srv.salon_name}</span>
+                    <span className="text-white opacity-30">•</span>
+                    {srv.discount_price ? (
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="text-white fw-bold" style={{ fontSize: '0.85rem' }}>${srv.discount_price}</span>
+                        <del className="text-white opacity-50 tiny" style={{ fontSize: '0.7rem' }}>${srv.price}</del>
                       </div>
-                      <div className="p-4">
-                        <h5 className="fw-bold text-dark mb-2">{ad.title}</h5>
-                        <p className="text-muted small mb-3 line-clamp-2">{ad.description}</p>
-                        <div className="d-flex align-items-center justify-content-between pt-3 border-top border-opacity-10">
-                          <span className="fw-bold text-rust small text-uppercase letter-spaced">{ad.salon_name}</span>
-                          <div className="btn btn-outline-dark btn-sm rounded-pill px-3">Book Now</div>
+                    ) : (
+                      <span className="text-white fw-bold" style={{ fontSize: '0.85rem' }}>${srv.price}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Divider Line for Modern Look */}
+                <div className="ms-4 h-100 opacity-20" style={{ width: '1px', height: '25px', backgroundColor: '#FFF' }}></div>
+              </Link>
+            ))}
+          </motion.div>
+          
+          {/* Edge Fades for Smooth Appearance */}
+          <div className="position-absolute top-0 start-0 h-100" style={{ width: '150px', zIndex: 2, background: 'linear-gradient(to right, #FF4500, transparent)' }}></div>
+          <div className="position-absolute top-0 end-0 h-100" style={{ width: '150px', zIndex: 2, background: 'linear-gradient(to left, #FF4500, transparent)' }}></div>
+        </div>
+      )}
+
+      {/* QUICK BROWSE SECTION - REDESIGNED BENTO CATEGORIES */}
+      <section className="container mt-5 pt-4">
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
+          <div>
+            <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
+              <FiTarget size={14} />
+              <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>Quick Browse</span>
+            </div>
+            <h2 className="display-5 fw-bold font-serif-italic mb-0">Explore Categories</h2>
+          </div>
+          <Link href="/services" className="btn btn-outline-rust rounded-pill px-4 py-2 fw-bold small letter-spaced transition-all hover-bg-rust hover-text-white">
+            VIEW ALL
+          </Link>
+        </div>
+        
+        <div className="row g-4 mt-2">
+          {featuredServices.length > 0 ? (
+            // Group by unique category name
+            Array.from(new Set(featuredServices.map(s => s.category_name?.toLowerCase()))).slice(0, 6).map((catName, idx) => {
+              const srv = featuredServices.find(s => s.category_name?.toLowerCase() === catName);
+              if (!srv) return null;
+
+              const categoryImages: { [key: string]: string } = {};
+              
+              const categoryIcon = catName?.includes('hair') ? <FiScissors size={20} /> : 
+                                  catName?.includes('face') ? <FiSmile size={20} /> : 
+                                  catName?.includes('spa') ? <MdSpa size={20} /> : 
+                                  catName?.includes('tattoo') ? <FiZap size={20} /> : <FiTag size={20} />;
+              
+              const bgImg = getImageUrl(categoryImages[catName || '']);
+
+              return (
+                <div className="col-6 col-md-4 col-lg-2" key={idx}>
+                  <Link href={`/salons?category=${catName}`} className="text-decoration-none">
+                    <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up border border-light" style={{ height: '160px', background: '#FDF9F0' }}>
+                      {/* Premium Tactile Content */}
+                      <div className="w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-center">
+                        <div className="text-rust mb-3 transition-all group-hover-scale" style={{ opacity: 0.8 }}>
+                          {categoryIcon}
+                        </div>
+                        <p className="fw-bold text-dark mb-1 small text-uppercase letter-spaced" style={{ fontSize: '0.7rem', letterSpacing: '1.5px' }}>{catName}</p>
+                        
+                        <div className="position-absolute bottom-0 mb-3 transition-all opacity-0 group-hover-opacity-100 translate-y-2 group-hover-translate-y-0">
+                          <span className="tiny fw-bold text-rust" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>EXPLORE</span>
                         </div>
                       </div>
                     </div>
                   </Link>
                 </div>
-              ))}
-            </div>
-          </section>
-        </FadeIn>
-      )}
-
-      {/* NEARBY SALONS SECTION */}
-      {nearbySalons.length > 0 && (
-        <FadeIn>
-          <section className="container mt-5 pt-5">
-            <div className="d-flex justify-content-between align-items-end mb-4">
-              <div>
-                <h2 className="fw-bold mb-0 display-6">Discover Excellence Near You</h2>
-                <p className="text-muted mt-2">Curated experiences in your local community.</p>
+              );
+            })
+          ) : (
+            [1, 2, 3, 4, 5, 6].map((i) => (
+              <div className="col text-center opacity-50" key={i}>
+                <div className="service-icon-circle mx-auto mb-3 bg-light"></div>
+                <div className="bg-light h-2 w-75 mx-auto rounded"></div>
               </div>
-              <Link href="/salons" className="text-rust fw-bold text-decoration-none d-flex align-items-center hover-underline">
-                View all salons <FiChevronRight className="ms-1" />
-              </Link>
-            </div>
-            
-            <div className="row g-4">
-              {nearbySalons.map((salon) => (
-                <div className="col-md-4" key={salon.id}>
-                  <div 
-                    onClick={() => router.push(`/salons/${salon.id}`)}
-                    className="card border-0 bg-white shadow-sm rounded-5 overflow-hidden h-100 transition-all hover-scale cursor-pointer"
-                  >
-                    <div className="position-relative" style={{ height: '260px' }}>
-                      <img 
-                        src={getImageUrl(salon.images?.[0]?.image) || 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&q=80'} 
-                        className="w-100 h-100 object-fit-cover"
-                        alt={salon.name}
-                      />
-                      <div className="position-absolute top-0 end-0 m-3">
-                        <div className="bg-white bg-opacity-90 backdrop-blur rounded-pill px-2 py-1 shadow-sm d-flex align-items-center">
-                          <FiStar className="text-warning me-1" style={{ fill: 'currentColor' }} />
-                          <span className="fw-bold small">{salon.rating || '5.0'}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h5 className="fw-bold text-dark mb-0">{salon.name}</h5>
-                        <span className="text-rust fw-bold">${salon.min_price || '15'}</span>
-                      </div>
-                      <p className="text-muted small mb-3 d-flex align-items-center">
-                        <FiMapPin className="me-1" /> {salon.address}
-                      </p>
-                      <div className="d-flex flex-wrap gap-2">
-                        {salon.offered_services?.slice(0, 3).map((service: string) => (
-                          <span key={service} className="badge bg-light text-dark rounded-pill px-3 py-1 fw-medium border border-opacity-10" style={{ fontSize: '0.65rem' }}>
-                            {service.toUpperCase()}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </FadeIn>
-      )}
+            ))
+          )}
+        </div>
+      </section>
+
+
+
+
 
       {/* ELITE MOBILE ARTISTS SECTION */}
       {independentPros.length > 0 && (
@@ -318,7 +363,7 @@ export default function Home() {
                       >
                         <div className="d-flex align-items-center mb-4">
                           <img 
-                            src={pro.cover_image || 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&q=80'} 
+                            src={getImageUrl(pro.cover_image)} 
                             className="rounded-circle object-fit-cover shadow-sm border border-white border-opacity-20"
                             style={{ width: '70px', height: '70px' }}
                             alt={pro.name}
@@ -346,73 +391,111 @@ export default function Home() {
           </section>
         </FadeIn>
       )}
+      {/* STYLE LOOKBOOK - REDESIGNED VISUAL DISCOVERY */}
+      <FadeIn>
+        <section className="container mt-5 pt-5">
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
+            <div>
+              <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
+                <MdOutlineRemoveRedEye size={14} />
+                <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>Visual Booking</span>
+              </div>
+              <h2 className="display-5 fw-bold font-serif-italic mb-2">The Style Lookbook</h2>
+              <p className="text-muted mb-0 lead opacity-75" style={{ maxWidth: '500px', fontSize: '1rem' }}>Book the exact style you want, directly from the artisans who created them.</p>
+            </div>
+            <Link href="/lookbook" className="btn btn-dark rounded-pill px-4 py-2 fw-bold small letter-spaced d-flex align-items-center gap-2 transition-all hover-scale shadow-sm">
+              EXPLORE ALL LOOKS <FiArrowRight size={16} />
+            </Link>
+          </div>
+          
+          <div className="row g-4 mt-2">
+            {lookbookItems.map((look, idx) => (
+              <div className="col-md-4" key={look.id}>
+                <div 
+                  onClick={() => router.push('/lookbook')}
+                  className="position-relative overflow-hidden rounded-5 cursor-pointer group shadow-sm transition-all hover-translate-up"
+                  style={{ height: '500px' }}
+                >
+                  <img 
+                    src={getImageUrl(look.image || look.img)} 
+                    className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium" 
+                    alt={look.title} 
+                  />
+                  
+                  {/* Subtle Gradient Overlay */}
+                  <div className="position-absolute bottom-0 start-0 w-100 h-100 transition-all group-hover-bg-black-20" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)' }}></div>
 
-
-      <section className="container mt-5 pt-5">
-        <p className="text-rust text-uppercase fw-bold mb-1" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Quick Browse</p>
-        <div className="d-flex justify-content-between align-items-end mb-4">
-          <h2 className="fw-bold mb-0 display-6">Explore Categories</h2>
-          <Link href="/services" className="text-rust text-decoration-none fw-bold small letter-spaced">VIEW ALL</Link>
-        </div>
-        
-        <div className="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-4 mt-4">
-          {featuredServices.length > 0 ? (
-            featuredServices.slice(0, 6).map((srv, idx) => (
-              <div className="col text-center" key={srv.id}>
-                <Link href={`/salons/${srv.salon}`} className="text-decoration-none">
-                  <div className="service-icon-circle mx-auto mb-3 transition-all hover-scale shadow-sm">
-                    {srv.category_name?.toLowerCase().includes('hair') ? <FiScissors /> : 
-                     srv.category_name?.toLowerCase().includes('face') ? <FiSmile /> : 
-                     srv.category_name?.toLowerCase().includes('spa') ? <MdSpa /> : <FiTag />}
+                  {/* Glassmorphism Title Card */}
+                  <div className="position-absolute bottom-0 start-0 w-100 p-4">
+                    <div className="glass-card p-4 rounded-4 border border-white border-opacity-10 shadow-lg transition-all group-hover-translate-up" style={{ background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(12px)' }}>
+                      <h4 className="text-white fw-bold mb-1">{look.title}</h4>
+                      <p className="text-white text-opacity-70 small mb-3">by {look.salon_name || look.salon}</p>
+                      <div className="btn btn-white btn-sm rounded-pill px-4 fw-bold text-dark opacity-0 group-hover-opacity-100 transition-all" style={{ fontSize: '0.7rem' }}>
+                        BOOK THIS STYLE
+                      </div>
+                    </div>
                   </div>
-                  <p className="fw-bold text-dark mb-1 small text-uppercase letter-spaced" style={{ fontSize: '0.7rem' }}>{srv.name}</p>
-                </Link>
+                </div>
               </div>
-            ))
-          ) : (
-            [1, 2, 3, 4, 5, 6].map((i) => (
-              <div className="col text-center opacity-50" key={i}>
-                <div className="service-icon-circle mx-auto mb-3 bg-light"></div>
-                <div className="bg-light h-2 w-75 mx-auto rounded"></div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      </FadeIn>
 
-      {/* TREATMENT HIGHLIGHTS - DETAILED LIST */}
+
+
+      {/* FEATURED TREATMENTS - REDESIGNED HIGHLIGHTS */}
       <section className="container mt-5 pt-5">
-        <p className="text-rust text-uppercase fw-bold mb-1" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Trending now</p>
-        <div className="d-flex justify-content-between align-items-end mb-4">
-          <h2 className="fw-bold mb-0 display-6">Featured Treatments</h2>
-          <Link href="/services" className="text-rust text-decoration-none fw-bold small letter-spaced">SEE MENU</Link>
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
+          <div>
+            <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
+              <FiZap size={14} />
+              <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>Trending now</span>
+            </div>
+            <h2 className="display-5 fw-bold font-serif-italic mb-0">Featured Treatments</h2>
+          </div>
+          <Link href="/services" className="btn btn-outline-rust rounded-pill px-4 py-2 fw-bold small letter-spaced transition-all hover-bg-rust hover-text-white">
+            SEE MENU
+          </Link>
         </div>
 
         <div className="row g-4 mt-2">
             {featuredServices.slice(0, 4).map((srv) => (
                 <div key={srv.id} className="col-12 col-md-6 col-xl-3">
                     <Link href={`/salons/${srv.salon}`} className="text-decoration-none">
-                        <div className="bg-white rounded-5 shadow-sm border border-opacity-10 overflow-hidden h-100 transition-all hover-scale">
-                            <div className="position-relative" style={{ height: '200px' }}>
-                                <img src={srv.image || 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80'} className="w-100 h-100 object-fit-cover" alt={srv.name} />
-                                <div className="position-absolute top-0 end-0 m-3 bg-white bg-opacity-75 backdrop-blur rounded-pill px-3 py-1 fw-bold text-dark shadow-sm" style={{ fontSize: '0.75rem' }}>
+                        <div className="position-relative bg-white rounded-5 shadow-sm border border-opacity-10 overflow-hidden h-100 transition-all hover-translate-up hover-shadow-xl group">
+                            {/* Image with Glass Price Tag */}
+                            <div className="position-relative overflow-hidden" style={{ height: '240px' }}>
+                                <img 
+                                  src={getImageUrl(srv.image)} 
+                                  className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium" 
+                                  alt={srv.name} 
+                                />
+                                <div className="position-absolute top-0 end-0 m-3 glass-card px-3 py-2 rounded-pill fw-bold text-dark shadow-sm" style={{ fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                                     ${srv.price}
                                 </div>
                             </div>
+
+                            {/* Content */}
                             <div className="p-4">
                                 <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-0.5px' }}>{srv.name}</h6>
-                                    <div className="text-warning small d-flex align-items-center">
-                                        <FiStar className="fill-warning me-1" size={12} /> {srv.salon_rating}
+                                    <h5 className="fw-bold mb-0 text-dark" style={{ letterSpacing: '-0.5px' }}>{srv.name}</h5>
+                                    <div className="d-flex align-items-center gap-1 text-warning fw-bold small">
+                                        <FiStar size={14} style={{ fill: 'currentColor' }} /> 
+                                        <span className="text-dark">{srv.salon_rating || '5.0'}</span>
                                     </div>
                                 </div>
-                                <p className="text-rust small fw-bold mb-3" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>{srv.salon_name?.toUpperCase()}</p>
-                                <div className="d-flex align-items-center gap-3 text-muted small fw-medium pt-3 border-top border-opacity-10">
-                                    <div className="d-flex align-items-center gap-1">
-                                        <FiClock size={14} className="opacity-50" /> {srv.duration} MIN
+                                
+                                <p className="text-rust small fw-bold mb-4 opacity-80" style={{ fontSize: '0.65rem', letterSpacing: '1.2px' }}>
+                                  {srv.salon_name?.toUpperCase()}
+                                </p>
+
+                                <div className="d-flex align-items-center justify-content-between pt-3 border-top border-opacity-10">
+                                    <div className="d-flex align-items-center gap-2 text-muted tiny fw-bold text-uppercase letter-spaced">
+                                        <FiClock size={14} className="text-rust" /> {srv.duration} MIN
                                     </div>
-                                    <div className="d-flex align-items-center gap-1">
-                                        <FiTag className="opacity-50" /> {srv.category_name}
+                                    <div className="d-flex align-items-center gap-2 text-muted tiny fw-bold text-uppercase letter-spaced">
+                                        <FiTag size={14} className="text-rust" /> {srv.category_name}
                                     </div>
                                 </div>
                             </div>
@@ -424,51 +507,75 @@ export default function Home() {
       </section>
 
       {/* SALONS NEAR YOU */}
-      {userLocation && nearbySalons.length > 0 && (
-        <section className="container mt-5 pt-5">
-          <div className="bg-white rounded-5 p-5 shadow-sm border border-opacity-10">
-            <p className="text-rust text-uppercase fw-bold mb-1" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Proximity search</p>
-            <div className="d-flex flex-wrap justify-content-between align-items-end mb-4">
+      {/* SALONS NEAR YOU - REDESIGNED PROXIMITY SEARCH */}
+      {nearbySalons.length > 0 && (
+        <FadeIn>
+          <section id="proximity" className="container mt-5 pt-5 mb-5">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
               <div>
-                <h2 className="fw-bold mb-0 display-6">Salons Near You</h2>
-                {userLocation && (
-                  <p className="text-muted small mt-1 mb-0">
-                    Your Location: <span className="text-rust fw-bold">{userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}</span>
-                  </p>
-                )}
+                <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
+                  <FiMapPin size={14} />
+                  <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.65rem' }}>Proximity search</span>
+                </div>
+                <h2 className="display-5 fw-bold font-serif-italic mb-2">Salons Near You</h2>
+                <div className="d-flex align-items-center gap-3">
+                  <div className="glass-pill px-3 py-2 rounded-pill border border-dark border-opacity-10 d-flex align-items-center gap-2" style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(10px)' }}>
+                    <div className={`rounded-circle ${userLocation ? 'bg-success' : 'bg-warning'}`} style={{ width: '8px', height: '8px' }}></div>
+                    <span className="tiny fw-bold text-muted text-uppercase letter-spaced" style={{ fontSize: '0.6rem' }}>
+                      {userLocation ? `LIVE LOCATION: ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}` : 'Location Access Required'}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className="btn btn-link text-decoration-none text-rust p-0 small fw-bold d-flex align-items-center gap-1 hover-underline"
+                  >
+                    <FiClock size={14} /> REFRESH
+                  </button>
+                </div>
               </div>
-              <div className="d-flex gap-3 align-items-center">
-                <button 
-                  onClick={() => window.location.reload()} 
-                  className="btn btn-outline-rust btn-sm rounded-pill px-3 fw-bold"
-                  style={{ fontSize: '0.75rem' }}
-                >
-                  <FiClock className="me-1" /> REFRESH LOCATION
-                </button>
-                <Link href="/salons" className="text-rust text-decoration-none fw-bold small letter-spaced">VIEW MAP</Link>
-              </div>
+              <Link href="/salons" className="btn btn-dark rounded-pill px-4 py-3 fw-bold d-flex align-items-center gap-2 shadow-sm transition-all hover-scale">
+                 <FiNavigation size={18} /> VIEW ON MAP
+              </Link>
             </div>
-            <div className="row g-4 mt-2">
+
+            <div className="row g-4">
               {nearbySalons.map((salon) => {
-                const distance = calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(salon.latitude), parseFloat(salon.longitude));
+                const distance = userLocation ? calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(salon.latitude), parseFloat(salon.longitude)) : null;
+                const salonImage = getImageUrl(salon.images?.[0]?.image || salon.cover_image);
+                
                 return (
-                  <div key={salon.id} className="col-md-4">
+                  <div key={salon.id} className="col-md-6 col-lg-4">
                     <Link href={`/salons/${salon.id}`} className="text-decoration-none">
-                      <div className="d-flex align-items-center p-3 rounded-4 transition-all hover-bg-light">
+                      <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up" style={{ height: '320px' }}>
                         <img 
-                          src={salon.cover_image} 
-                          alt={salon.name} 
-                          className="rounded-circle object-fit-cover shadow-sm" 
-                          style={{ width: '80px', height: '80px' }} 
+                          src={salonImage} 
+                          className="w-100 h-100 object-fit-cover transition-all hover-zoom-premium"
+                          alt={salon.name}
                         />
-                        <div className="ms-4">
-                          <h6 className="fw-bold text-dark mb-1">{salon.name}</h6>
-                          <p className="text-muted small mb-1 d-flex align-items-center gap-1">
-                            <FiMapPin size={12} className="text-rust" /> {salon.address}
-                          </p>
-                          <span className="badge bg-rust text-white rounded-pill px-2 py-1" style={{ fontSize: '0.65rem' }}>
-                            {formatDistance(distance)} AWAY
-                          </span>
+                        
+                        {/* Gradient Overlay */}
+                        <div className="position-absolute bottom-0 start-0 w-100 p-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
+                          <div className="d-flex justify-content-between align-items-end">
+                            <div>
+                              <h4 className="text-white fw-bold mb-1">{salon.name}</h4>
+                              <p className="text-white text-opacity-70 small mb-0 d-flex align-items-center gap-1">
+                                <FiMapPin size={12} className="text-rust" /> {salon.address}
+                              </p>
+                            </div>
+                            {distance !== null && (
+                              <div className="bg-rust text-white px-3 py-1 rounded-pill fw-bold shadow-sm" style={{ fontSize: '0.7rem', backdropFilter: 'blur(5px)' }}>
+                                 {formatDistance(distance)} AWAY
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Top Badges */}
+                        <div className="position-absolute top-0 start-0 m-4">
+                           <div className="bg-white bg-opacity-90 backdrop-blur rounded-pill px-2 py-1 shadow-sm d-flex align-items-center">
+                              <FiStar className="text-warning me-1" style={{ fill: 'currentColor' }} />
+                              <span className="fw-bold small text-dark">{salon.rating || '5.0'}</span>
+                           </div>
                         </div>
                       </div>
                     </Link>
@@ -476,187 +583,587 @@ export default function Home() {
                 );
               })}
             </div>
-          </div>
-        </section>
+          </section>
+        </FadeIn>
       )}
 
-      {/* CURATED COLLECTIONS */}
-      <FadeIn>
-        <section className="container mt-5 pt-5">
-          <div className="d-flex justify-content-between align-items-end mb-4">
-            <h2 className="fw-bold mb-0 display-6">Curated Collections</h2>
-            <Link href="/salons" className="text-rust text-decoration-none fw-bold small letter-spaced d-flex align-items-center">
-              BROWSE MORE <FiChevronRight className="ms-1" />
-            </Link>
+
+
+      {/* HOW IT WORKS - REDESIGNED STEPS */}
+      <section id="how-it-works" className="py-5" style={{ background: '#FDF9F0' }}>
+        <div className="container py-5">
+          <div className="text-center mb-5 pb-3">
+            <p className="text-rust text-uppercase fw-bold mb-2 small letter-spaced">Simple & Seamless</p>
+            <h2 className="display-4 fw-bold font-serif-italic text-dark">How FindSalon Works</h2>
           </div>
+
           <div className="row g-4">
-            {curatedSalons.length > 0 ? (
-              curatedSalons.map((salon) => (
-                <div className="col-md-4" key={salon.id}>
-                  <Link href={`/salons/${salon.id}`} className="text-decoration-none text-dark d-block">
-                    <div className="image-card-rounded shadow-sm overflow-hidden position-relative group mb-3">
-                      <div className="badge-float bg-white text-dark fw-bold border-0" style={{ top: '20px', right: '20px' }}>{salon.rating} ★</div>
-                      <div className="position-absolute bg-white rounded-pill px-4 py-2 fw-bold shadow-sm" style={{ bottom: '20px', left: '20px', zIndex: 10, fontSize: '0.85rem' }}>FROM ${salon.min_price}</div>
-                      <img src={salon.cover_image} alt={salon.name} className="w-100 transition-all hover-zoom" style={{ height: '420px', objectFit: 'cover' }} />
+            {[
+              { 
+                id: '01', 
+                icon: <FiSearch size={32} />,
+                title: 'Search & Discover', 
+                desc: 'Browse top-rated salons and barbers near you. Filter by your specific needs, compare prices, and read verified reviews.' 
+              },
+              { 
+                id: '02', 
+                icon: <FiZap size={32} />,
+                title: 'Book Instantly', 
+                desc: 'Select your service and pick a time slot. Secure your chair immediately by paying a small, safe deposit via MTN MoMo.' 
+              },
+              { 
+                id: '03', 
+                icon: <FiSmartphone size={32} />,
+                title: 'Show up & Shine', 
+                desc: 'Skip the waiting area. Walk right in for your luxury appointment, and simply pay the remaining balance directly to the salon.' 
+              }
+            ].map((step, idx) => (
+              <div className="col-lg-4" key={step.id}>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: idx * 0.2 }}
+                  className="position-relative p-5 h-100 transition-all hover-translate-up"
+                  style={{ 
+                    background: '#121212', 
+                    borderRadius: '40px',
+                    color: 'white',
+                    overflow: 'hidden',
+                    border: '1px solid rgba(255,255,255,0.05)'
+                  }}
+                >
+                  {/* Large Background Number */}
+                  <div className="position-absolute top-0 end-0 p-4 opacity-5 fw-bold" style={{ fontSize: '8rem', lineHeight: 1, pointerEvents: 'none' }}>
+                    {step.id}
+                  </div>
+
+                  <div className="position-relative" style={{ zIndex: 1 }}>
+                    <div className="bg-rust rounded-circle d-flex align-items-center justify-content-center mb-4 shadow-lg" style={{ width: '64px', height: '64px' }}>
+                      <div className="text-white">{step.icon}</div>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center px-1">
-                      <div>
-                        <h5 className="fw-bold mb-1 letter-spaced text-uppercase" style={{ fontSize: '1rem' }}>{salon.name}</h5>
-                        <div className="d-flex align-items-center gap-2 mb-1">
-                          <p className="text-muted small mb-0"><FiMapPin className="me-1 text-rust"/>{salon.address}</p>
-                          {userLocation && salon.latitude && salon.longitude && (
-                            <span className="badge bg-rust bg-opacity-10 text-rust rounded-pill px-2 py-1" style={{ fontSize: '0.65rem' }}>
-                              {formatDistance(calculateDistance(userLocation.latitude, userLocation.longitude, parseFloat(salon.latitude), parseFloat(salon.longitude)))} away
-                            </span>
-                          )}
-                        </div>
+                    <h4 className="fw-bold mb-3">{step.title}</h4>
+                    <p className="text-white text-opacity-50 mb-0" style={{ lineHeight: '1.7' }}>{step.desc}</p>
+                  </div>
+                </motion.div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* OWNER SUITE - REDESIGNED HOOK CARD */}
+      <section className="container mb-5 pb-5">
+        <div className="bento-card p-5 text-white position-relative overflow-hidden transition-all hover-translate-up" style={{ 
+          backgroundColor: '#121212', 
+          borderRadius: '48px',
+          border: '1px solid rgba(156, 74, 52, 0.3)',
+          boxShadow: '0 40px 80px -20px rgba(0,0,0,0.5)'
+        }}>
+          {/* Decorative background element */}
+          <div className="position-absolute top-0 end-0 p-5 opacity-10 d-none d-lg-block" style={{ transform: 'rotate(-15deg) translate(20%, -20%)' }}>
+            <FiTarget size={300} className="text-rust" />
+          </div>
+          
+          <div className="position-relative" style={{ zIndex: 1 }}>
+            <div className="row align-items-center g-5">
+              <div className="col-lg-7">
+                <span className="badge bg-rust text-white fw-bold px-3 py-2 rounded-pill shadow-sm mb-4 small letter-spaced">OWNER SUITE</span>
+                <h2 className="fw-bold mb-3 display-5 font-serif-italic">Own a Salon or Barbershop?</h2>
+                <p className="text-white text-opacity-75 mb-5 lead" style={{ maxWidth: '600px' }}>
+                  Stop losing money to no-shows. Join Liberia's premier beauty network to manage your bookings, track your daily revenue, and grow your clientele with our elite digital tools.
+                </p>
+                
+                <div className="row g-4 mb-5">
+                  {[
+                    { title: "No-Show Protection", icon: <FiShield size={20} /> },
+                    { title: "Real-time Revenue Tracking", icon: <FiTrendingUp size={20} /> },
+                    { title: "Verified Client Growth", icon: <FiUsers size={20} /> }
+                  ].map((feature, idx) => (
+                    <div className="col-sm-6 col-md-4" key={idx}>
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="text-rust">{feature.icon}</div>
+                        <span className="fw-bold small letter-spaced text-uppercase" style={{ fontSize: '0.65rem' }}>{feature.title}</span>
                       </div>
-                      <div className="btn btn-dark rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: '40px', height: '40px' }}><FiChevronRight /></div>
                     </div>
-                  </Link>
+                  ))}
                 </div>
-              ))
-            ) : (
-              // Fallback Loaders / Skeleton
-              [1, 2, 3].map((i) => (
-                <div className="col-md-4" key={i}>
-                  <div className="bg-light rounded-4 w-100" style={{ height: '420px' }}></div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-      </FadeIn>
 
-      {/* THREE STEPS */}
-      <section className="container mt-5 pt-5 mb-5 pb-5 border-bottom border-light">
-        <div className="row g-5">
-          {[
-            { id: '01', title: 'Search & Discover', desc: 'Browse through thousands of top-rated salons, filter by your specific needs, and read verified reviews from our community.' },
-            { id: '02', title: 'Book Instantly', desc: 'Select your service, choose an artist, and pick a time slot that fits your lifestyle. Real-time availability at your fingertips.' },
-            { id: '03', title: 'Show up & Shine', desc: 'Enjoy your luxury appointment. We securely process payments and streamline communication with the artist.' }
-          ].map((step, idx) => (
-            <div className="col-md-4" key={step.id}>
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: idx * 0.2 }}
-              >
-                <h4 className="text-rust fw-bold mb-3">{step.id}</h4>
-                <h5 className="fw-bold">{step.title}</h5>
-                <p className="text-muted mt-2">{step.desc}</p>
-              </motion.div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-
-      {/* PARTNER SECTION / PRICING */}
-      <section id="pricing" className="container mt-5 pt-5">
-        <div className="bg-white rounded-5 p-0 shadow-sm overflow-hidden border border-opacity-10">
-          <div className="row g-0">
-            <div className="col-lg-5">
-              <img src="/owner-suite.jpg" alt="Salon Professional" className="w-100 h-100 object-fit-cover" style={{ minHeight: '500px' }} />
-            </div>
-            <div className="col-lg-7 p-5">
-              <p className="text-rust text-uppercase fw-bold mb-2 small letter-spaced">Business Growth</p>
-              <h2 className="fw-bold mb-3 font-serif-italic display-5">Aura Luxe Partner Suite</h2>
-              <p className="text-muted mb-5 lead">Join Liberia's most prestigious beauty network. Register your business for free and enjoy your first month on us.</p>
-              
-              <div className="row g-4 mb-5">
-                <div className="col-md-6">
-                  <div className="p-4 rounded-4 bg-sand border border-opacity-10 h-100">
-                    <h5 className="fw-bold mb-1">Essential Plan</h5>
-                    <p className="text-muted small mb-3">Perfect for boutique artisans</p>
-                    <div className="d-flex align-items-baseline gap-1 mb-4">
-                      <span className="fs-3 fw-bold text-dark">$15</span>
-                      <span className="text-muted small">/month</span>
-                    </div>
-                    <ul className="list-unstyled mb-0">
-                      <li className="mb-2 small"><FiCheckCircle className="text-rust me-2"/> 10 Service Listings</li>
-                      <li className="mb-2 small"><FiCheckCircle className="text-rust me-2"/> Basic Analytics</li>
-                      <li className="mb-2 small"><FiCheckCircle className="text-rust me-2"/> Standard Support</li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="p-4 rounded-4 bg-dark text-white h-100 shadow-lg position-relative overflow-hidden">
-                    <div className="position-absolute top-0 end-0 bg-rust text-white px-3 py-1 fw-bold small" style={{ fontSize: '0.6rem', transform: 'rotate(45deg) translate(15px, -10px)', width: '100px', textAlign: 'center' }}>PRO</div>
-                    <h5 className="fw-bold mb-1">Elite Plan</h5>
-                    <p className="text-white-50 small mb-3">For high-volume luxury salons</p>
-                    <div className="d-flex align-items-baseline gap-1 mb-4">
-                      <span className="fs-3 fw-bold text-rust">$20</span>
-                      <span className="text-white-50 small">/month</span>
-                    </div>
-                    <ul className="list-unstyled mb-0">
-                      <li className="mb-2 small"><FiCheckCircle className="text-rust me-2"/> Unlimited Listings</li>
-                      <li className="mb-2 small"><FiCheckCircle className="text-rust me-2"/> Advanced Growth Tools</li>
-                      <li className="mb-2 small"><FiCheckCircle className="text-rust me-2"/> 24/7 Priority Concierge</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-rust bg-opacity-10 p-4 rounded-4 mb-5">
-                <div className="d-flex align-items-center gap-3">
-                  <div className="bg-rust text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                    <FiClock size={20} />
-                  </div>
-                  <div>
-                    <h6 className="fw-bold mb-0 text-dark">First Month Free</h6>
-                    <p className="text-muted small mb-0">Start your journey today with zero upfront cost. No credit card required to register.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="d-flex flex-column flex-sm-row gap-3 mt-4">
-                <Link href="/register?role=OWNER" className="btn btn-dark rounded-pill px-5 py-3 fw-bold">Register Business Free</Link>
-                <Link href="/services" className="btn btn-outline-dark rounded-pill px-4 py-3 fw-bold">Explore Suite Features</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER CTA & FOOTER */}
-      <div className="bg-white mt-5 pt-5 pb-4">
-        <div className="container">
-          <div className="bg-dark rounded-4 p-5 text-white" style={{ position: 'relative', overflow: 'hidden' }}>
-            <div className="row align-items-center position-relative" style={{ zIndex: 1 }}>
-              <div className="col-md-6">
-                <p className="text-uppercase fw-bold mb-2 small text-rust letter-spaced">Elevate your experience</p>
-                <h2 className="fw-bold mb-4" style={{ fontSize: '2.5rem' }}>Luxury booking,<br/>simplified for the web.</h2>
-                <p className="mb-4" style={{ opacity: 0.8 }}>Experience a faster, more intuitive way to manage your beauty appointments. No downloads required—just pure, effortless browsing on any device.</p>
-                <div className="d-flex mb-4">
-                  <div className="me-4">
-                    <h6 className="fw-bold"><FiCheckCircle className="text-rust me-1"/> Multi-Device Sync</h6>
-                    <p className="small text-white-50">Book on your desktop, verify on your phone. Instant sync everywhere.</p>
-                  </div>
-                  <div>
-                    <h6 className="fw-bold"><FiCheckCircle className="text-rust me-1"/> Instant Loading</h6>
-                    <p className="small text-white-50">Optimized architecture means no waiting. Fast availability checks.</p>
-                  </div>
-                </div>
-                <Link href="/salons">
-                  <button className="btn btn-rust rounded-pill px-5 py-3 fw-bold transition-all hover-scale border-0">Start Browsing Now</button>
+                <Link href="/register?role=OWNER" className="btn btn-rust btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg transition-all hover-scale border-0">
+                  List Your Business for Free
                 </Link>
               </div>
-              <div className="col-md-6 text-end">
-                <img src="/elevate-experience.jpg" alt="Luxury booking interface" className="img-fluid rounded-3 border border-secondary shadow-lg" />
+
+              <div className="col-lg-5 d-none d-lg-block text-end">
+                <div className="bg-white bg-opacity-5 rounded-4 p-4 border border-white border-opacity-10 shadow-2xl text-start" style={{ backdropFilter: 'blur(10px)' }}>
+                   <div className="d-flex justify-content-between align-items-center mb-4">
+                     <h6 className="fw-bold mb-0 small text-rust text-uppercase letter-spaced">Business Analytics</h6>
+                     <span className="tiny text-success fw-bold">+24% THIS WEEK</span>
+                   </div>
+                   <div className="d-flex align-items-end gap-2 mb-4" style={{ height: '100px' }}>
+                      {[40, 70, 45, 90, 65, 80, 55].map((h, i) => (
+                        <div key={i} className="flex-grow-1 bg-rust rounded-top" style={{ height: `${h}%`, opacity: 0.3 + (h/100) }}></div>
+                      ))}
+                   </div>
+                   <div className="pt-3 border-top border-white border-opacity-10 d-flex justify-content-between">
+                      <div>
+                        <div className="tiny opacity-50 text-uppercase letter-spaced">Daily Revenue</div>
+                        <div className="h5 fw-bold mb-0">$245.00</div>
+                      </div>
+                      <div className="text-end">
+                        <div className="tiny opacity-50 text-uppercase letter-spaced">Bookings</div>
+                        <div className="h5 fw-bold mb-0">12</div>
+                      </div>
+                   </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+
+      {/* PARTNER SECTION / BENTO GRID DESIGN */}
+      <section id="pricing" className="container mt-5 pt-5 mb-5">
+        <div className="text-center mb-5">
+          <p className="text-rust text-uppercase fw-bold mb-2 small letter-spaced">Business Growth</p>
+          <h2 className="fw-bold mb-3 font-serif-italic display-4">FindSalon Partner Suite</h2>
+          <p className="text-muted mx-auto" style={{ maxWidth: '700px' }}>
+            Liberia’s growing beauty marketplace. Build your digital presence, attract customers, and manage appointments — all at no cost.
+          </p>
+        </div>
+
+        {/* BENTO GRID */}
+        <div className="bento-grid-container" style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(12, 1fr)', 
+          gridAutoRows: 'minmax(180px, auto)',
+          gap: '24px',
+          padding: '20px'
+        }}>
+          
+          {/* Card 1: Grow Your Customer Base (Wide) */}
+          <div className="bento-card bento-dark bento-wide" style={{ 
+            gridColumn: 'span 8', 
+            gridRow: 'span 2',
+            background: '#121212',
+            borderRadius: '32px',
+            padding: '40px',
+            color: 'white',
+            position: 'relative',
+            overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.05)'
+          }}>
+            <div className="position-relative" style={{ zIndex: 1 }}>
+              <div className="d-flex align-items-center gap-3 mb-4">
+                <div className="bg-rust bg-opacity-20 p-2 rounded-3">
+                  <FiTrendingUp className="text-rust" size={24} />
+                </div>
+                <h4 className="fw-bold mb-0">Grow Your Customer Base</h4>
+              </div>
+              <p className="text-white-50 mb-5" style={{ maxWidth: '400px' }}>
+                Reach thousands of active customers searching for your services. Our discovery engine puts your salon in front of the right people at the right time.
+              </p>
+              
+              {/* Mock Visualization: Popularity List */}
+              <div className="mt-4" style={{ maxWidth: '450px' }}>
+                <div className="d-flex justify-content-between mb-2 small opacity-50">
+                  <span>Service</span>
+                  <span>Popularity</span>
+                </div>
+                {[
+                  { name: 'Knotless Braids', val: '85%' },
+                  { name: 'Silk Press', val: '72%' },
+                  { name: 'Bridal Glam', val: '64%' }
+                ].map((item, i) => (
+                  <div key={i} className="mb-3">
+                    <div className="d-flex justify-content-between mb-1">
+                      <span className="small fw-medium">{item.name}</span>
+                      <span className="tiny text-rust">{item.val}</span>
+                    </div>
+                    <div className="progress" style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
+                      <div className="progress-bar bg-rust" style={{ width: item.val, borderRadius: '10px' }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Background Accent */}
+            <div className="position-absolute top-0 end-0 p-5 opacity-10" style={{ transform: 'translate(20%, -20%)' }}>
+              <FiTrendingUp size={200} />
+            </div>
+          </div>
+
+          {/* Card 2: Accept Digital Bookings (Tall) */}
+          <div className="bento-card bento-dark bento-tall" style={{ 
+            gridColumn: 'span 4', 
+            gridRow: 'span 3',
+            background: '#1A1A1A',
+            borderRadius: '32px',
+            padding: '40px',
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div>
+              <div className="bg-rust bg-opacity-20 p-3 rounded-4 d-inline-flex mb-4">
+                <FiSmartphone className="text-rust" size={28} />
+              </div>
+              <h4 className="fw-bold mb-3">Accept Digital Bookings</h4>
+              <p className="text-white-50 small">
+                Your salon is always open. Let customers book 24/7 from their mobile devices without a single phone call.
+              </p>
+            </div>
+            
+            {/* Mock Visual: App Notification Card */}
+            <div className="bg-white bg-opacity-10 rounded-4 p-3 border border-white border-opacity-20 mt-4 shadow-lg">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <div className="bg-success rounded-circle" style={{ width: '8px', height: '8px' }}></div>
+                <span className="fw-bold text-white letter-spaced" style={{ fontSize: '0.65rem' }}>NEW BOOKING REQUEST</span>
+              </div>
+              <div className="mt-2">
+                <div className="small fw-bold text-white">Sarah Williams</div>
+                <div className="small text-white text-opacity-75">Today at 2:30 PM • $45.00</div>
+              </div>
+              <div className="d-flex gap-2 mt-3">
+                <div className="flex-grow-1 bg-rust rounded-pill text-white p-1 text-center fw-bold" style={{ fontSize: '0.7rem' }}>ACCEPT</div>
+                <div className="flex-grow-1 bg-white bg-opacity-20 rounded-pill text-white p-1 text-center fw-bold" style={{ fontSize: '0.7rem' }}>VIEW</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Increase Visibility (Square) */}
+          <div className="bento-card bento-dark" style={{ 
+            gridColumn: 'span 4', 
+            gridRow: 'span 2',
+            background: '#1A1A1A',
+            borderRadius: '32px',
+            padding: '40px',
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.05)'
+          }}>
+            <div className="bg-rust bg-opacity-20 p-2 rounded-3 d-inline-flex mb-4">
+              <MdOutlineRemoveRedEye className="text-rust" size={24} />
+            </div>
+            <h4 className="fw-bold mb-3">Visibility</h4>
+            <p className="text-white text-opacity-75 small mb-4">
+              Showcase your work to a larger audience and build a prestigious digital brand.
+            </p>
+            {/* Mock Visual: Eye/Stats */}
+            <div className="text-center py-3">
+              <div className="display-6 fw-bold text-rust">1.2k+</div>
+              <div className="small text-white text-opacity-50 text-uppercase fw-bold letter-spaced">Weekly Profile Views</div>
+            </div>
+          </div>
+
+          {/* Card 4: Revenue Analytics (Wide) */}
+          <div className="bento-card bento-dark" style={{ 
+            gridColumn: 'span 4', 
+            gridRow: 'span 2',
+            background: '#121212',
+            borderRadius: '32px',
+            padding: '40px',
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.05)',
+            overflow: 'hidden'
+          }}>
+            <div className="d-flex align-items-center gap-3 mb-4">
+              <div className="bg-rust bg-opacity-20 p-2 rounded-3">
+                <FiZap className="text-rust" size={24} />
+              </div>
+              <h4 className="fw-bold mb-0">Analytics</h4>
+            </div>
+            <p className="text-white text-opacity-75 small mb-4">
+              Track your revenue and bookings with powerful smart tools.
+            </p>
+            {/* Mock Chart Visual */}
+            <div className="d-flex align-items-end gap-2 h-50 pt-2">
+              {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
+                <div key={i} className="flex-grow-1 bg-rust bg-opacity-30 rounded-top transition-all hover-bg-rust" style={{ height: `${h}%`, minWidth: '10px' }}></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Card 5: Unified Free Call to Action (Large Card) */}
+          <div className="bento-card bento-dark" style={{ 
+            gridColumn: 'span 12', 
+            gridRow: 'span 2',
+            background: '#000',
+            borderRadius: '40px',
+            padding: '50px',
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.1)',
+            marginTop: '20px'
+          }}>
+            <div className="row align-items-center g-5">
+              <div className="col-lg-6">
+                <h2 className="display-5 fw-bold mb-4">Complete Operating System. <span className="text-rust">Always Free.</span></h2>
+                <p className="text-white text-opacity-75 mb-5 lead">
+                  Join Liberia's elite beauty network today. Access every feature—from inventory management to automated SMS—with zero monthly costs.
+                </p>
+                <div className="d-flex flex-wrap gap-3">
+                  <Link href="/register?role=OWNER" className="btn btn-rust btn-lg rounded-pill px-5 fw-bold transition-all hover-scale shadow-lg">List Your Business Free</Link>
+                </div>
+              </div>
+              <div className="col-lg-6">
+                <div className="bg-white bg-opacity-10 rounded-4 p-4 border border-white border-opacity-20">
+                  <h6 className="fw-bold text-rust mb-4" style={{ fontSize: '0.85rem', letterSpacing: '1px' }}>ALL FEATURES INCLUDED</h6>
+                  <div className="row g-3">
+                    {[
+                      "Digital Bookings", "Inventory Management", "Revenue Analytics",
+                      "Staff Management", "SMS Reminders", "Mobile Money Ready",
+                      "Customer Discovery", "Priority Ranking", "Business Profile"
+                    ].map((feature, idx) => (
+                      <div className="col-6" key={idx}>
+                        <div className="d-flex align-items-center gap-2 small text-white">
+                          <FiCheckCircle className="text-rust" size={14} /> {feature}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+      {/* MOBILE READY / PWA BENTO SECTION */}
+      <section id="mobile-ready" className="py-5" style={{ background: '#F5F0E1' }}>
+        <div className="container py-5">
+          <div className="bento-grid-container" style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(12, 1fr)', 
+            gridAutoRows: 'minmax(200px, auto)',
+            gap: '24px'
+          }}>
+            
+            {/* Main Header Card (Wide) */}
+            <div className="bento-card p-5" style={{ 
+              gridColumn: 'span 8', 
+              gridRow: 'span 2',
+              background: '#121212',
+              borderRadius: '40px',
+              color: 'white',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div className="position-relative" style={{ zIndex: 1 }}>
+                <span className="text-rust fw-bold letter-spaced small mb-3 d-block">INSTANT • SECURE • NO STORAGE SPACE</span>
+                <h2 className="display-4 fw-bold mb-4 font-serif-italic">Take FindSalon <br/> with you.</h2>
+                <p className="text-white text-opacity-75 lead mb-0" style={{ maxWidth: '500px' }}>
+                  Download our web app to your home screen for instant access to bookings, salon locations, and your style favorites. No App Store required.
+                </p>
+              </div>
+              <div className="position-absolute bottom-0 end-0 p-5 opacity-5">
+                <FiDownload size={250} />
+              </div>
+            </div>
+
+            {/* Installation & CTA Card (Tall Right) */}
+            <div className="bento-card p-4 text-center" style={{ 
+              gridColumn: 'span 4', 
+              gridRow: 'span 4',
+              background: '#1A1A1A',
+              borderRadius: '40px',
+              color: 'white',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              border: '1px solid rgba(255,255,255,0.05)'
+            }}>
+              <div className="pt-4">
+                <div className="bg-rust rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center shadow-lg" style={{ width: '80px', height: '80px' }}>
+                  <FiScissors className="text-white" size={40} />
+                </div>
+                <h4 className="fw-bold mb-2">Install on your device</h4>
+                <p className="small text-white text-opacity-50">Works on iOS, Android, and Desktop</p>
+              </div>
+
+              {/* Mock App Preview */}
+              <div className="bg-white bg-opacity-5 rounded-4 p-4 border border-white border-opacity-10 mt-4 mx-2">
+                <div className="d-flex align-items-center gap-3 mb-4 text-start">
+                   <div className="bg-white rounded-3 p-2" style={{ width: '50px' }}>
+                     <img src="/icons/icon-192x192.png" className="w-100 rounded-2" alt="FS" 
+                          onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<FiScissors class="text-rust" size={30} />' }} />
+                   </div>
+                   <div>
+                     <div className="small fw-bold">FindSalon</div>
+                     <div className="tiny opacity-50">Web App Ready</div>
+                   </div>
+                </div>
+                <InstallPwa variant="inline" />
+              </div>
+
+              <div className="pb-4 mt-4">
+                <p className="tiny text-white text-opacity-50 mb-0">Experience the future of beauty bookings.</p>
+              </div>
+            </div>
+
+            {/* Install Steps Card */}
+            <div className="bento-card p-5" style={{ 
+              gridColumn: 'span 4', 
+              gridRow: 'span 2',
+              background: '#1A1A1A',
+              borderRadius: '40px',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.05)'
+            }}>
+              <h5 className="fw-bold mb-4 d-flex align-items-center gap-2">
+                <FiDownload className="text-rust" /> How to install:
+              </h5>
+              <div className="d-flex flex-column gap-3">
+                {[
+                  "Click the download button above",
+                  "Select 'Add to Home Screen'",
+                  "Launch from your home screen"
+                ].map((step, i) => (
+                  <div key={i} className="d-flex align-items-start gap-3">
+                    <span className="bg-rust text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '24px', height: '24px', fontSize: '0.7rem', flexShrink: 0 }}>{i+1}</span>
+                    <span className="small text-white text-opacity-75">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Elevate Experience Card */}
+            <div className="bento-card p-5" style={{ 
+              gridColumn: 'span 4', 
+              gridRow: 'span 2',
+              background: '#121212',
+              borderRadius: '40px',
+              color: 'white',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center'
+            }}>
+              <p className="text-rust fw-bold text-uppercase tiny letter-spaced mb-2">Elevate your experience</p>
+              <h5 className="fw-bold mb-3">Luxury booking, simplified for the web.</h5>
+              <p className="small text-white text-opacity-50 mb-4">
+                Experience a faster, more intuitive way to manage your beauty appointments. No downloads required.
+              </p>
+              <div className="d-flex flex-column gap-3">
+                <div>
+                  <div className="d-flex align-items-center gap-2 small fw-bold text-white mb-1">
+                    <FiCheckCircle className="text-rust" size={14} /> Multi-Device Sync
+                  </div>
+                  <p className="tiny text-white text-opacity-50 mb-0 ps-4">Book on desktop, verify on phone. Instant sync.</p>
+                </div>
+                <div>
+                  <div className="d-flex align-items-center gap-2 small fw-bold text-white mb-1">
+                    <FiCheckCircle className="text-rust" size={14} /> Instant Loading
+                  </div>
+                  <p className="tiny text-white text-opacity-50 mb-0 ps-4">Optimized architecture. No waiting.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
       <style jsx>{`
         input::placeholder { color: #A0968F; font-weight: 400; }
+        .hover-card-premium { position: relative; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-card-premium:hover { transform: translateY(-12px); box-shadow: 0 30px 60px -12px rgba(30, 25, 21, 0.15) !important; border-color: rgba(156, 74, 52, 0.2) !important; }
+        .hover-zoom-premium { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-card-premium:hover .hover-zoom-premium { transform: scale(1.1); }
+        .action-reveal { transition: all 0.4s ease; }
+        .hover-card-premium:hover .action-reveal { background: rgba(156, 74, 52, 0.02); }
         .hover-zoom:hover { transform: scale(1.05); }
         .hover-scale:hover { transform: scale(1.02); }
         .transition-all { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .letter-spaced { letter-spacing: 2px; }
+        .cursor-pointer { cursor: pointer; }
+        .hover-translate-right:hover { transform: translateX(5px); }
+        .hover-translate-up:hover { transform: translateY(-5px); }
+
+        .glass-input-wrapper {
+          display: flex;
+          align-items: center;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          padding: 12px;
+          transition: all 0.3s ease;
+        }
+        .glass-input-wrapper:focus-within {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.4);
+        }
+        .glass-input {
+          background: transparent;
+          border: 0;
+          color: white;
+          width: 100%;
+          padding-left: 12px;
+          outline: none;
+          font-weight: 500;
+        }
+        .glass-input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .hero-blob-container {
+          width: 100%;
+          max-width: 700px;
+          height: auto;
+          aspect-ratio: 1 / 1;
+          position: relative;
+        }
+        .hero-blob-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          clip-path: url(#blobClip);
+          border-radius: 40px;
+        }
+
+        .glass-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(15px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 20px;
+          padding: 20px;
+          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .text-shine-white {
+          background: linear-gradient(to right, #FFFFFF 20%, #F4EFEA 40%, #FFFFFF 60%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine 4s linear infinite;
+        }
+
+        .text-shine-silver {
+          background: linear-gradient(to right, #FFFFFF 20%, #E5E4E2 40%, #FFFFFF 60%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shine 4s linear infinite;
+          text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .tiny { font-size: 0.7rem; }
+        .letter-spaced { letter-spacing: 1.5px; }
+
+        @keyframes shine {
+          to {
+            background-position: 200% center;
+          }
+        }
+        @media (max-width: 576px) {
+          .hero-blob-container {
+            transform: scale(0.85);
+          }
+        }
       `}</style>
+
     </>
   );
 }

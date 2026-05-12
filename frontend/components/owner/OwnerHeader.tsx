@@ -85,10 +85,12 @@ export default function OwnerHeader({ onQuickAction, searchPlaceholder, actionLa
     }
   };
 
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+
   return (
-    <header className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-5 gap-3">
-      {/* Search Bar */}
-      <div className="position-relative d-none d-md-block" style={{ width: '400px' }}>
+    <header className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-5 gap-4">
+      {/* Search Bar - Desktop and Tablet */}
+      <div className="position-relative d-none d-lg-block" style={{ width: '400px' }}>
         <FiSearch className="position-absolute translate-middle-y text-muted" style={{ top: '50%', left: '16px' }} size={18} />
         <input 
           type="text" 
@@ -98,10 +100,39 @@ export default function OwnerHeader({ onQuickAction, searchPlaceholder, actionLa
         />
       </div>
 
+      {/* Mobile Search Bar (Toggleable) */}
+      {showMobileSearch && (
+        <div className="d-lg-none w-100 animate-fade-in">
+          <div className="position-relative">
+            <FiSearch className="position-absolute translate-middle-y text-muted" style={{ top: '50%', left: '16px' }} size={18} />
+            <input 
+              type="text" 
+              autoFocus
+              placeholder={searchPlaceholder || "Search..."} 
+              className="form-control rounded-pill border-0 shadow-sm ps-5 py-3"
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', fontSize: '0.9rem' }}
+            />
+            <button 
+              onClick={() => setShowMobileSearch(false)}
+              className="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted px-3"
+            >
+              <FiX />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Right Side Actions */}
-      <div className="d-flex align-items-center justify-content-between justify-content-md-end gap-4 flex-grow-1">
+      <div className={`d-flex align-items-center justify-content-between justify-content-md-end gap-3 gap-md-4 flex-grow-1 ${showMobileSearch ? 'd-none' : 'd-flex'}`}>
         <div className="d-flex align-items-center gap-3 text-muted">
           
+          {/* Mobile Search Toggle */}
+          <FiSearch 
+            size={20} 
+            className="d-lg-none cursor-pointer hover-rust transition-all" 
+            onClick={() => setShowMobileSearch(true)}
+          />
+
           {/* Notifications Bell */}
           <div className="position-relative" ref={notificationRef}>
             <FiBell 
@@ -118,7 +149,7 @@ export default function OwnerHeader({ onQuickAction, searchPlaceholder, actionLa
             {showNotifications && (
               <div 
                 className="position-absolute end-0 mt-3 bg-white shadow-lg rounded-5 border border-opacity-10 overflow-hidden z-3" 
-                style={{ width: '350px', top: '100%' }}
+                style={{ width: 'clamp(280px, 90vw, 380px)', top: '100%' }}
               >
                 <div className="p-4 border-bottom d-flex justify-content-between align-items-center bg-sand bg-opacity-50">
                   <h6 className="fw-bold mb-0 text-dark">Notifications</h6>
@@ -167,24 +198,26 @@ export default function OwnerHeader({ onQuickAction, searchPlaceholder, actionLa
             )}
           </div>
 
-          <FiHelpCircle size={20} className="cursor-pointer hover-rust transition-all" />
+          <FiHelpCircle size={20} className="d-none d-sm-block cursor-pointer hover-rust transition-all" />
         </div>
 
-        <div className="d-flex align-items-center gap-3">
+        <div className="d-flex align-items-center gap-2 gap-md-3">
           {actionLabel && onQuickAction && (
             <button 
               onClick={onQuickAction}
-              className="btn btn-rust rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 shadow-sm border-0 transition-all hover-scale d-none d-sm-flex"
+              className="btn btn-rust rounded-pill px-3 px-md-4 py-2 fw-bold d-flex align-items-center gap-2 shadow-sm border-0 transition-all hover-scale"
+              style={{ fontSize: 'var(--fs-xs)' }}
             >
-              {actionLabel}
+              <span className="d-none d-sm-inline">{actionLabel}</span>
+              <span className="d-sm-none">+</span>
             </button>
           )}
 
-          <div className="border-start ps-4 d-flex align-items-center gap-3">
-            <div className="text-end d-none d-lg-block">
+          <div className="border-start ps-3 ps-md-4 d-flex align-items-center gap-3">
+            <div className="text-end d-none d-md-block">
               <div className="d-flex align-items-center gap-2 justify-content-end">
                 {salon?.subscription_plan && (
-                  <span className={`badge rounded-pill px-2 py-0 small border border-opacity-10 ${salon.subscription_plan === 'ELITE' ? 'bg-dark text-white' : 'bg-rust bg-opacity-10 text-rust'}`} style={{ fontSize: '0.6rem' }}>
+                  <span className={`badge rounded-pill px-2 py-0 small border border-opacity-10 ${salon.subscription_plan === 'PRO' ? 'bg-dark text-white' : 'bg-rust bg-opacity-10 text-rust'}`} style={{ fontSize: '0.6rem' }}>
                     {salon.subscription_plan}
                   </span>
                 )}

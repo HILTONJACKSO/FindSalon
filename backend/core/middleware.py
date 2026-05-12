@@ -16,28 +16,38 @@ class SecurityFortressMiddleware:
         
     def __call__(self, request):
         try:
-            # 0. MEDIA & STATIC BYPASS: Always allow public access to assets
+            # 0. PREFLIGHT BYPASS: Always allow OPTIONS for CORS
+            if request.method == 'OPTIONS':
+                return self.get_response(request)
+
+            # 1. MEDIA & STATIC BYPASS: Always allow public access to assets
             path = request.path.lower().rstrip('/')
+            print(f"DEBUG SecurityFortress: Incoming Path: {request.path}, Normalized: {path}")
             if path.startswith('/media/') or path.startswith('/static/'):
                 return self.get_response(request)
 
             # 1. HYPER-SCALE BYPASS: Allow public access to discovery and auth
-            
             public_paths = [
-                '/api/auth/register', '/api/auth/login', '/api/auth/token', 
+                '/api/auth', '/api/auth/register', '/api/auth/login', '/api/auth/token', 
                 '/api/auth/profile', '/api/bookings', '/api/reviews', 
                 '/api/salons', '/api/services', '/api/ads', '/api/deals', 
-                '/api/categories', '/api/staff'
+                '/api/categories', '/api/staff', '/api/b2b'
             ]
             
-            # Check if normalized current path starts with any public path
-            if any(path.startswith(p.lower()) for p in public_paths):
+            matched_path = next((p for p in public_paths if path == p.lower() or path.startswith(p.lower() + '/')), None)
+            if matched_path:
+                print(f"DEBUG SecurityFortress: Allowed Path (Whitelist: {matched_path}): {path}")
                 return self.get_response(request)
+
+            print(f"DEBUG SecurityFortress: Path not in whitelist, checking for token: {path}")
 
             # 2. TOKEN-AWARE BYPASS: Trust Authorization headers
             auth_header = request.headers.get('Authorization')
             if auth_header and (auth_header.startswith('Bearer ') or auth_header.startswith('Firebase ')):
+                print(f"DEBUG SecurityFortress: Allowed Path (Token Bypass): {path}")
                 return self.get_response(request)
+
+            print(f"DEBUG SecurityFortress: Blocked Path (No token, not public): {path}, Method: {request.method}")
                 
             # 3. IP-BASED RATE LIMITING (Only for non-public paths)
             ip = self.get_client_ip(request)

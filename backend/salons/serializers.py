@@ -1,6 +1,29 @@
 from rest_framework import serializers
 from django.db import models
-from .models import Salon, SalonImage, SalonCategory
+from .models import Salon, SalonImage, SalonCategory, PortfolioItem
+
+class PortfolioItemSerializer(serializers.ModelSerializer):
+    salon_name = serializers.ReadOnlyField(source='salon.name')
+    salon_rating = serializers.ReadOnlyField(source='salon.rating')
+    
+    class Meta:
+        model = PortfolioItem
+        fields = ('id', 'salon', 'salon_name', 'salon_rating', 'service', 'title', 'image', 'price', 'category', 'created_at')
+        read_only_fields = ('id', 'salon', 'created_at')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.image:
+            url = instance.image.url
+            if not url.startswith('http'):
+                request = self.context.get('request')
+                if request:
+                    representation['image'] = request.build_absolute_uri(url)
+                else:
+                    from django.conf import settings
+                    base_url = getattr(settings, 'BACKEND_URL', 'http://127.0.0.1:8000')
+                    representation['image'] = f"{base_url.rstrip('/')}{url}"
+        return representation
 
 class SalonCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,7 +69,7 @@ class SalonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Salon
-        fields = ('id', 'owner', 'owner_email', 'name', 'description', 'address', 'latitude', 'longitude', 'opening_hours', 'images', 'category', 'category_data', 'rating', 'reviews_count', 'min_price', 'cover_image', 'staff_count', 'stylist_avatars', 'offered_services', 'followers_count', 'is_following', 'is_approved', 'is_active', 'salon_type', 'offers_home_service', 'subscription_plan', 'created_at')
+        fields = ('id', 'owner', 'owner_email', 'name', 'description', 'address', 'latitude', 'longitude', 'opening_hours', 'images', 'category', 'category_data', 'rating', 'reviews_count', 'min_price', 'cover_image', 'staff_count', 'stylist_avatars', 'offered_services', 'followers_count', 'is_following', 'is_approved', 'is_active', 'salon_type', 'offers_home_service', 'subscription_plan', 'require_deposit', 'deposit_amount', 'created_at')
         read_only_fields = ('id', 'owner', 'owner_email', 'created_at', 'rating', 'reviews_count', 'min_price', 'cover_image', 'staff_count', 'stylist_avatars', 'offered_services', 'followers_count', 'is_following', 'is_approved', 'is_active', 'salon_type', 'offers_home_service', 'subscription_plan')
 
     def get_owner_email(self, obj):

@@ -12,6 +12,15 @@ html {
   --text-dark: #1E1915;
   --text-muted: #7A7067;
   --divider: #EBE5DB;
+  
+  /* Fluid Typography Tokens */
+  --fs-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.85rem);
+  --fs-sm: clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem);
+  --fs-base: clamp(0.95rem, 0.9rem + 0.4vw, 1.1rem);
+  --fs-md: clamp(1.15rem, 1.1rem + 0.5vw, 1.4rem);
+  --fs-lg: clamp(1.4rem, 1.3rem + 0.8vw, 2rem);
+  --fs-xl: clamp(2rem, 1.8rem + 1.5vw, 3.5rem);
+  --fs-display: clamp(2.5rem, 2.2rem + 3vw, 5rem);
 }
 
 
@@ -19,11 +28,22 @@ body {
   background-color: var(--bg-sand);
   color: var(--text-dark);
   font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-base);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* Prevent horizontal scroll globally */
+}
+
+/* Adaptive Container Behavior */
+@media (max-width: 350px) {
+  .container, .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }
 
 .text-rust { color: var(--accent-rust); }
 .bg-rust { background-color: var(--accent-rust); }
+.bg-sand { background-color: var(--bg-sand); }
 .btn-rust { background-color: var(--accent-rust); color: white; }
 
 .font-serif-italic {
@@ -118,4 +138,77 @@ body {
   border-radius: 24px;
   overflow: hidden;
   position: relative;
+}
+
+/* --- STYLE LOOKBOOK & MODALS --- */
+.lookbook-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(30, 25, 21, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.lookbook-modal {
+  max-width: 1000px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.hover-zoom-premium { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+.group:hover .hover-zoom-premium { transform: scale(1.08); }
+
+.letter-spaced { letter-spacing: 2px; }
+
+.hover-scale { transition: transform 0.3s ease; }
+.hover-scale:hover { transform: scale(1.02); }
+
+.lookbook-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(30, 25, 21, 0.9) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.group:hover .lookbook-overlay {
+  opacity: 1;
+}
+
+/* --- RESPONSIVE UTILITIES --- */
+.responsive-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+
+.responsive-table-container table {
+  min-width: 800px; /* Force scroll on small screens for data integrity */
+}
+
+@media (max-width: 576px) {
+  .responsive-table-container table {
+    min-width: 600px;
+  }
+}
+
+/* Hide scrollbar for cleaner look in horizontal scrollers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

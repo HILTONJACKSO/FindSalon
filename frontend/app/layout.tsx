@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import Providers from '@/lib/Providers';
@@ -18,9 +18,22 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: 'FindSalon - Your Glow, Curated.',
   description: 'Book the most prestigious beauty artisans in your city.',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'FindSalon',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: '/logo.jpg',
+    apple: '/icons/icon-192x192.png',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#F26419',
 };
 
 import Navbar from '@/components/shared/Navbar';

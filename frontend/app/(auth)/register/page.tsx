@@ -60,7 +60,7 @@ export default function RegisterPage() {
       
       router.push('/login?registered=true');
     } catch (err: any) {
-      console.error("Registration error full details:", err.response || err);
+      console.error("Registration error full details:", err.response?.data || err.message || err);
       if (err.response?.data) {
         const backendErrors = err.response.data;
         const firstError = Object.values(backendErrors)[0];

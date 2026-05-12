@@ -6,7 +6,7 @@ export const api = axios.create({
 });
 
 export const getImageUrl = (path: string | null | undefined) => {
-  if (!path) return null;
+  if (!path) return 'https://placehold.co/800x600/FDF9F0/B45309?text=FindSalon';
   if (path.startsWith('http')) return path;
   // Standardize on 127.0.0.1 to match the default baseURL
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api').replace('/api', '');

@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/deals/', include('deals.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/ads/', include('ads.urls')),
+    path('api/b2b/', include('b2b_products.urls')),
 ]
 
 if settings.DEBUG:

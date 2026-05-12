@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, GoogleAuthProvider, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
@@ -87,14 +87,14 @@ export default function LoginPage() {
 
       setAuth(userProfile, token);
       
-      // HYPER-SCALE REDIRECTION SECURITY
+      // STRICT ROLE-BASED REDIRECTION SECURITY
       const role = userProfile.role;
-      const email = userProfile.email?.toLowerCase();
       
-      if (role === 'ADMIN' || email?.includes('admin@') || email === 'jack@admin.com') {
+      if (role === 'ADMIN') {
           console.log("Super Admin Access Granted. Routing to Command Center...");
           router.push('/admin/dashboard');
       } else if (role === 'OWNER') {
+          console.log("Salon Owner Access Granted. Routing to Owner Dashboard...");
           router.push('/owner/dashboard');
       } else {
           router.push('/profile');
@@ -108,13 +108,43 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     try {
+      setError('');
+      // Set persistence based on keepSigned
+      await setPersistence(auth, keepSigned ? browserLocalPersistence : browserSessionPersistence);
+      
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      // Use Redirect instead of Popup for better stability in unstable networks
+      await signInWithRedirect(auth, provider);
     } catch (err: any) {
-      setError('Google sign in failed');
+      console.error("Google sign in error:", err);
+      if (err.code === 'auth/popup-blocked') {
+        setError('Popup blocked by browser. Please allow popups for this site.');
+      } else {
+        setError('Google sign in failed. Please try again.');
+      }
     }
   };
+
+  // Handle redirect result if needed (though AuthProvider usually catches it)
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const { getRedirectResult } = await import('firebase/auth');
+        const result = await getRedirectResult(auth);
+        if (result) {
+          const token = await result.user.getIdToken();
+          const profileRes = await api.get('auth/profile/', { 
+            headers: { Authorization: `Bearer ${token}` } 
+          });
+          setAuth(profileRes.data, token);
+          router.push('/profile');
+        }
+      } catch (err) {
+        console.error("Redirect result error:", err);
+      }
+    };
+    checkRedirect();
+  }, [router, setAuth]);
 
   return (
     <div className="container-fluid p-0 min-vh-100 d-flex bg-sand" style={{ backgroundColor: 'var(--bg-sand)' }}>

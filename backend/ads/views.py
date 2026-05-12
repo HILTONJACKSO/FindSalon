@@ -23,14 +23,14 @@ class AdViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated and (user.role == 'ADMIN' or user.is_staff):
+        if user.is_authenticated and (getattr(user, 'role', None) == 'ADMIN' or user.is_staff):
             return Ad.objects.all()
         return Ad.objects.filter(salon__owner=user)
 
     def perform_create(self, serializer):
         user = self.request.user
         salon = user.salons.first()
-        if not salon and user.role != 'ADMIN':
+        if not salon and getattr(user, 'role', None) != 'ADMIN':
             from rest_framework.exceptions import ValidationError
             raise ValidationError("You must own a salon to create an ad.")
         

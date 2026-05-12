@@ -57,23 +57,23 @@ INSTALLED_APPS = [
     'staff',
     'deals',
     'ads',
+    'b2b_products',
 ]
 
 
 MIDDLEWARE = [
-
+    'corsheaders.middleware.CorsMiddleware',
     'core.csrf_middleware.DisableCSRFMiddleware',
+    'core.middleware.SecurityFortressMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.gzip.GZipMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
 
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.middleware.SecurityFortressMiddleware',
 ]
 
 
@@ -163,12 +163,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.User'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://192.168.1.6:3000",
-]
+CORS_ALLOW_ALL_ORIGINS = True # Hyper-Scale Development Bypass
 CORS_ALLOW_CREDENTIALS = True
+
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+#     "http://192.168.1.6:3000",
+# ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",

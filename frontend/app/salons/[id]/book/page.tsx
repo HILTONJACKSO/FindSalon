@@ -29,8 +29,9 @@ export default function BookingWizard() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
   
   // Payment specific state
-  const [paymentMethod, setPaymentMethod] = useState<'saved_card' | 'mobile_money' | 'pay_at_salon'>('pay_at_salon');
+  const [paymentMethod, setPaymentMethod] = useState<'saved_card' | 'mobile_money' | 'pay_at_salon'>('mobile_money');
   const [agreedToTerms, setAgreedToTerms] = useState<boolean>(false);
+  const [showPolicyModal, setShowPolicyModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (!salonId) return;
@@ -71,6 +72,15 @@ export default function BookingWizard() {
   const selectedService = services.find(s => String(s.id) === String(selectedServiceId));
   const selectedProfessional = professionals.find(p => String(p.id) === String(selectedProfessionalId));
 
+  // Pricing Calculations
+  const basePrice = selectedService?.price || 0;
+  const discount = basePrice * 0.07;
+  const discountedPrice = basePrice - discount;
+  const serviceFee = basePrice * 0.04;
+  const totalPrice = discountedPrice + serviceFee;
+  const payNow = serviceFee;
+  const payAtSalon = discountedPrice;
+
   const handleNextStep = () => {
     if (currentStep < 4) setCurrentStep((prev) => (prev + 1) as 1 | 2 | 3 | 4);
   };
@@ -91,6 +101,37 @@ export default function BookingWizard() {
 
   return (
     <div className="min-vh-100 d-flex flex-column" style={{ backgroundColor: '#FDFBF7' }}>
+      {/* POLICY MODAL */}
+      {showPolicyModal && (
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center px-3" style={{ zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}>
+          <div className="card border-0 bg-white shadow-lg rounded-4 p-4 w-100 overflow-auto" style={{ maxWidth: '600px', maxHeight: '90vh' }}>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h4 className="fw-bold text-dark mb-0">Cancellation & Rescheduling Policy</h4>
+              <button onClick={() => setShowPolicyModal(false)} className="btn btn-sm btn-light rounded-circle d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+                <FiX size={20} />
+              </button>
+            </div>
+            
+            <div className="text-muted small">
+              <h6 className="fw-bold text-dark mt-3 mb-2">Cancellation Policy</h6>
+              <p className="mb-2">Customers may cancel appointments directly through the FindSalon platform.</p>
+              <ul className="mb-3">
+                <li className="mb-1"><span className="fw-bold text-dark">Free Cancellation:</span> Cancellations made at least 5 hours before the appointment time are allowed.</li>
+                <li className="mb-1"><span className="fw-bold text-dark">Late Cancellation:</span> If a cancellation is made less than 5 hours before the appointment, the 4% FindSalon service fee is non-refundable.</li>
+                <li className="mb-1"><span className="fw-bold text-dark">No-Show Policy:</span> Customers who repeatedly miss appointments without cancellation may face temporary booking restrictions.</li>
+              </ul>
+
+              <h6 className="fw-bold text-dark mt-4 mb-2">Rescheduling Policy</h6>
+              <p className="mb-2">Customers may reschedule appointments directly within the app.</p>
+              <ul className="mb-3">
+                <li className="mb-1"><span className="fw-bold text-dark">Free Reschedule:</span> One free reschedule is allowed per booking. Rescheduling must be done at least 5 hours before the appointment time.</li>
+                <li className="mb-1"><span className="fw-bold text-dark">Multiple Reschedules:</span> Repeated rescheduling may result in booking limitations to protect salon scheduling and availability.</li>
+              </ul>
+            </div>
+            <button onClick={() => setShowPolicyModal(false)} className="btn btn-rust w-100 rounded-pill py-3 fw-bold mt-4 shadow-sm">I Understand</button>
+          </div>
+        </div>
+      )}
       
       {currentStep < 4 ? (
         <>
@@ -227,15 +268,27 @@ export default function BookingWizard() {
                 {currentStep === 3 && (
                     <div>
                         <h1 className="fw-bold mb-4" style={{ fontSize: '2.5rem', letterSpacing: '-1px' }}>Payment Method</h1>
+                        <p className="text-muted mb-4 pe-4">To secure your booking, you'll pay the FindSalon Service Fee online. The remaining balance will be paid directly to the salon.</p>
                         <div className="bg-white rounded-4 shadow-sm p-2 mb-4 mt-4">
-                             <div className="d-flex align-items-center p-4 border-bottom cursor-pointer" onClick={() => setPaymentMethod('pay_at_salon')}>
-                                <div className="bg-light rounded-circle d-flex align-items-center justify-content-center me-4" style={{ width: '45px', height: '45px' }}><FiDollarSign size={20} className="text-dark" /></div>
+                             <div className="d-flex align-items-center p-4 border-bottom cursor-pointer" onClick={() => setPaymentMethod('mobile_money')}>
+                                <div className="bg-light rounded-circle d-flex align-items-center justify-content-center me-4" style={{ width: '45px', height: '45px' }}><FiSmartphone size={20} className="text-dark" /></div>
                                 <div className="flex-grow-1">
-                                    <div className="fw-bold fs-5">Pay at Salon</div>
-                                    <div className="text-muted small">Secure your slot and pay after service</div>
+                                    <div className="fw-bold fs-5">Pay Service Fee (${payNow.toFixed(2)})</div>
+                                    <div className="text-muted small">Pay securely via MTN Mobile Money</div>
                                 </div>
-                                <div className={`rounded-circle border border-2 d-flex align-items-center justify-content-center ${paymentMethod === 'pay_at_salon' ? 'border-rust' : 'border-secondary bg-opacity-25'}`} style={{ width: '25px', height: '25px' }}>
-                                    {paymentMethod === 'pay_at_salon' && <div className="bg-rust rounded-circle" style={{ width: '13px', height: '13px' }}></div>}
+                                <div className={`rounded-circle border border-2 d-flex align-items-center justify-content-center ${paymentMethod === 'mobile_money' ? 'border-rust' : 'border-secondary bg-opacity-25'}`} style={{ width: '25px', height: '25px' }}>
+                                    {paymentMethod === 'mobile_money' && <div className="bg-rust rounded-circle" style={{ width: '13px', height: '13px' }}></div>}
+                                </div>
+                             </div>
+                             
+                             <div className="d-flex align-items-center p-4 bg-light bg-opacity-50">
+                                <div className="bg-white rounded-circle d-flex align-items-center justify-content-center me-4 shadow-sm" style={{ width: '45px', height: '45px' }}><FiDollarSign size={20} className="text-muted" /></div>
+                                <div className="flex-grow-1">
+                                    <div className="fw-bold fs-5 text-muted">Pay at Salon (${payAtSalon.toFixed(2)})</div>
+                                    <div className="text-muted small">Pay the remaining balance after your service</div>
+                                </div>
+                                <div>
+                                    <FiCheck size={24} className="text-success" />
                                 </div>
                              </div>
                         </div>
@@ -248,7 +301,7 @@ export default function BookingWizard() {
                                 onChange={(e) => setAgreedToTerms(e.target.checked)}
                             />
                             <label className="form-check-label text-muted lh-base">
-                                I agree to the Terms of Service and acknowledge the Cancellation Policy.
+                                I agree to the Terms of Service and acknowledge the <span className="text-rust fw-bold text-decoration-underline cursor-pointer" onClick={() => setShowPolicyModal(true)}>Cancellation & Rescheduling Policy</span>.
                             </label>
                         </div>
                     </div>
@@ -291,9 +344,35 @@ export default function BookingWizard() {
                             </div>
                         )}
 
-                        <div className="d-flex justify-content-between align-items-end mt-4 mb-4 border-top pt-4">
-                            <h3 className="fw-bold mb-0">Total</h3>
-                            <h3 className="fw-bold mb-0 text-rust">${selectedService?.price || 0}</h3>
+                        <div className="mb-4 border-top pt-4">
+                            <div className="d-flex justify-content-between mb-2">
+                                <span className="text-muted">Original Price</span>
+                                <span>${basePrice.toFixed(2)}</span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-2">
+                                <span className="text-muted">FindSalon Discount (7%)</span>
+                                <span className="text-success">-${discount.toFixed(2)}</span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-3">
+                                <span className="text-muted">Service Fee (4%)</span>
+                                <span>+${serviceFee.toFixed(2)}</span>
+                            </div>
+                            
+                            <div className="d-flex justify-content-between align-items-end mt-2 pt-3 border-top">
+                                <h3 className="fw-bold mb-0">Total</h3>
+                                <h3 className="fw-bold mb-0 text-rust">${totalPrice.toFixed(2)}</h3>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-light p-3 rounded-3 mb-4">
+                            <div className="d-flex justify-content-between mb-2">
+                                <span className="fw-bold small">Pay Now (Service Fee)</span>
+                                <span className="fw-bold text-dark">${payNow.toFixed(2)}</span>
+                            </div>
+                            <div className="d-flex justify-content-between">
+                                <span className="text-muted small">Pay at Salon</span>
+                                <span className="text-muted small">${payAtSalon.toFixed(2)}</span>
+                            </div>
                         </div>
 
                         <button 

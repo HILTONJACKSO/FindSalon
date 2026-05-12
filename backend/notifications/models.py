@@ -7,6 +7,8 @@ class Notification(models.Model):
         BOOKING = 'BOOKING', 'Booking'
         BILLING = 'BILLING', 'Billing'
         SYSTEM = 'SYSTEM', 'System'
+        BROADCAST = 'BROADCAST', 'Broadcast'
+        PROMOTION = 'PROMOTION', 'Promotion'
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     title = models.CharField(max_length=255)
@@ -17,3 +19,18 @@ class Notification(models.Model):
     
     def __str__(self):
         return f"{self.user.email} - {self.title}"
+
+class AdminBroadcast(models.Model):
+    class Target(models.TextChoices):
+        ALL = 'ALL', 'All Users'
+        OWNERS = 'OWNERS', 'Salon Owners Only'
+        CUSTOMERS = 'CUSTOMERS', 'Customers Only'
+
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    target_audience = models.CharField(max_length=20, choices=Target.choices, default=Target.ALL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_sent = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Broadcast: {self.title} to {self.target_audience}"

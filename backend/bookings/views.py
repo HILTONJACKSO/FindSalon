@@ -1,4 +1,5 @@
 from django.utils import timezone
+from payments.utils import calculate_booking_pricing
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -90,12 +91,27 @@ class BookingViewSet(viewsets.ModelViewSet):
 
 
 
+
     def perform_create(self, serializer):
         user = self.request.user
-        # The actual booking creation is minimal
+        # The actual booking creation
         booking = serializer.save(user=user)
         
-        # Trigger side effects safely in a background thread to prevent any Broker delay from blocking the response
+        # 1. Calculate Base Price from selected services
+        base_price = sum(service.price for service in booking.services.all())
+        
+        # 2. Run the FindSalon math
+        pricing = calculate_booking_pricing(base_price)
+        
+        # 3. Store financial data in the booking
+        booking.total_price = pricing["total_price"]
+        booking.deposit_paid = 0.00 # Reset until MoMo success
+        booking.balance_due = pricing["pay_at_salon"]
+        booking.platform_fee = pricing["service_fee"]
+        booking.salon_wallet_credit = pricing["salon_wallet_credit"]
+        booking.save()
+
+        # Trigger side effects safely in a background thread
         import threading
         def run_background_tasks(bid):
             try:
@@ -127,3 +143,43 @@ class BookingViewSet(viewsets.ModelViewSet):
         booking.status = Booking.Status.CANCELLED
         booking.save()
         return Response({'status': 'booking cancelled'})
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def pay_deposit(self, request, pk=None):
+        from payments.utils import MomoClient
+        booking = self.get_object()
+        momo_number = request.data.get('momo_number')
+        
+        if not momo_number:
+            return Response({"detail": "MTN Mobile Money number is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Trigger MoMo payment for the deposit amount only
+        momo = MomoClient()
+        # Ensure we use the correct currency/environment from settings if needed
+        ref_id, momo_status = momo.request_to_pay(
+            amount=booking.deposit_paid or calculate_booking_pricing(sum(s.price for s in booking.services.all()))["pay_now"],
+            phone=momo_number,
+            external_id=str(booking.id),
+            payee_note=f"Service Fee for {booking.salon.name}"
+        )
+
+        if ref_id:
+            booking.transaction_id = ref_id
+            booking.save()
+            return Response({
+                "status": "PENDING",
+                "message": "Please confirm the payment on your phone",
+                "transaction_id": ref_id
+            })
+        else:
+            return Response({"detail": f"MoMo Initiation Failed: {momo_status}"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def complete(self, request, pk=None):
+        booking = self.get_object()
+        if booking.salon.owner != request.user:
+            return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+        
+        booking.status = Booking.Status.COMPLETED
+        booking.save()
+        return Response({'status': 'booking completed'})

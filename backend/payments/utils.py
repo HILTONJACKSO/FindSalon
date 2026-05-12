@@ -113,3 +113,46 @@ class MomoClient:
         except Exception as e:
             logger.error(f"MoMo Status Check Failed: {e}")
             return "FAILED"
+
+def calculate_booking_pricing(salon_base_price):
+    """
+    Calculates the new FindSalon pricing logic:
+    - 7% discount on the original salon price.
+    - 4% FindSalon service fee (paid online).
+    - Remaining balance paid at the salon.
+    """
+    from decimal import Decimal
+    
+    # Ensure we're working with Decimals for financial precision
+    salon_base_price = Decimal(str(salon_base_price))
+    
+    # 1. Calculate 7% discount
+    discount = salon_base_price * Decimal('0.07')
+    
+    # 2. Discounted Salon Price
+    discounted_salon_price = salon_base_price - discount
+    
+    # 3. Service Fee (4% of original price)
+    service_fee = salon_base_price * Decimal('0.04')
+    
+    # 4. Total Price (Discounted + Service Fee)
+    total_price = discounted_salon_price + service_fee
+    
+    # 5. Split payment: Service Fee is paid online, Discounted price is paid at the salon
+    pay_now = service_fee
+    pay_at_salon = discounted_salon_price
+    
+    # Salon wallet credit is 0 for the online payment part since FindSalon keeps the service fee.
+    # The salon gets the full pay_at_salon amount in person.
+    salon_wallet_credit = Decimal('0.00')
+    
+    return {
+        "original_price": round(salon_base_price, 2),
+        "discount": round(discount, 2),
+        "discounted_salon_price": round(discounted_salon_price, 2),
+        "service_fee": round(service_fee, 2),
+        "total_price": round(total_price, 2),
+        "pay_now": round(pay_now, 2),
+        "pay_at_salon": round(pay_at_salon, 2),
+        "salon_wallet_credit": round(salon_wallet_credit, 2)
+    }

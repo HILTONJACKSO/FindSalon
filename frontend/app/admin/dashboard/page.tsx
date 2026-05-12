@@ -22,82 +22,180 @@ export default function AdminDashboard() {
     fetchStats();
   }, []);
 
-  if (loading) return <div>Loading statistics...</div>;
+  if (loading) return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+          <div className="spinner-border text-rust" role="status">
+              <span className="visually-hidden">Loading...</span>
+          </div>
+      </div>
+  );
 
   const kpis = [
-    { label: 'Total Revenue', value: `$${stats?.total_revenue?.toLocaleString()}`, icon: <FiDollarSign />, color: 'rust' },
-    { label: 'Active Salons', value: stats?.total_salons, icon: <FiActivity />, color: 'dark' },
-    { label: 'Pending Approvals', value: stats?.pending_approvals, icon: <FiClock />, color: 'rust' },
-    { label: 'Total Bookings', value: stats?.total_bookings, icon: <FiShoppingBag />, color: 'dark' },
+    { 
+        label: 'Total Revenue', 
+        value: `$${stats?.revenue?.total?.toLocaleString()}`, 
+        sub: `Today: $${stats?.revenue?.today?.toLocaleString()}`,
+        icon: <FiDollarSign />, 
+        color: 'rust' 
+    },
+    { 
+        label: 'Platform Growth', 
+        value: stats?.growth?.total_salons, 
+        sub: `${stats?.growth?.total_customers} Customers`,
+        icon: <FiTrendingUp />, 
+        color: 'dark' 
+    },
+    { 
+        label: 'Approvals', 
+        value: stats?.growth?.pending_salons, 
+        sub: 'Pending Verification',
+        icon: <FiClock />, 
+        color: 'rust' 
+    },
+    { 
+        label: 'Total Bookings', 
+        value: stats?.bookings?.total, 
+        sub: `Today: ${stats?.bookings?.today}`,
+        icon: <FiShoppingBag />, 
+        color: 'dark' 
+    },
   ];
 
   return (
-    <div className="admin-dashboard">
-      <div className="row g-4 mb-5">
+    <div className="admin-dashboard pb-5">
+      
+      {/* KPI GRID */}
+      <div className="row g-4 mb-5 mt-2">
         {kpis.map((kpi, idx) => (
           <div key={idx} className="col-md-6 col-xl-3">
             <div className="bg-white rounded-5 p-4 shadow-sm border border-opacity-10 h-100 transition-all hover-scale">
               <div className="d-flex justify-content-between align-items-start mb-3">
                 <div className={`bg-${kpi.color} bg-opacity-10 text-${kpi.color} rounded-circle p-3 d-flex align-items-center justify-content-center`} style={{ width: '50px', height: '50px' }}>
-                  {React.cloneElement(kpi.icon as React.ReactElement, { size: 24 })}
+                  {React.isValidElement(kpi.icon) && React.cloneElement(kpi.icon as React.ReactElement<any>, { size: 24 })}
                 </div>
-                {idx === 0 && <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 small">+12.5%</span>}
               </div>
               <p className="text-muted small fw-bold text-uppercase letter-spaced mb-1" style={{ fontSize: '0.65rem' }}>{kpi.label}</p>
-              <h3 className="fw-bold mb-0 text-dark">{kpi.value}</h3>
+              <h3 className="fw-bold mb-1 text-dark">{kpi.value}</h3>
+              <p className="text-rust small fw-bold mb-0">{kpi.sub}</p>
             </div>
           </div>
         ))}
       </div>
 
+      <div className="row g-4 mb-5">
+        
+        {/* BOOKING TRACKER SECTION */}
+        <div className="col-lg-12">
+            <div className="bg-white rounded-5 p-5 shadow-sm border border-opacity-10">
+                <div className="d-flex justify-content-between align-items-end mb-5">
+                    <div>
+                        <h4 className="fw-bold mb-1 text-dark">Booking Performance Tracker</h4>
+                        <p className="text-muted small mb-0">Platform-wide appointment volume breakdown</p>
+                    </div>
+                    <div className="bg-rust bg-opacity-10 text-rust rounded-pill px-4 py-2 fw-bold small">
+                        Generated: {new Date(stats?.generated_at).toLocaleTimeString()}
+                    </div>
+                </div>
+
+                <div className="row g-4 text-center">
+                    <div className="col-md-4">
+                        <div className="p-4 rounded-5 bg-sand border border-opacity-10">
+                            <h2 className="fw-bold text-rust mb-1">{stats?.bookings?.today}</h2>
+                            <p className="text-muted small fw-bold text-uppercase letter-spaced mb-0">Bookings Today</p>
+                        </div>
+                    </div>
+                    <div className="col-md-4">
+                        <div className="p-4 rounded-5 bg-sand border border-opacity-10">
+                            <h2 className="fw-bold text-dark mb-1">{stats?.bookings?.this_month}</h2>
+                            <p className="text-muted small fw-bold text-uppercase letter-spaced mb-0">This Month</p>
+                        </div>
+                    </div>
+                    <div className="col-md-4">
+                        <div className="p-4 rounded-5 bg-sand border border-opacity-10">
+                            <h2 className="fw-bold text-dark mb-1">{stats?.bookings?.this_year}</h2>
+                            <p className="text-muted small fw-bold text-uppercase letter-spaced mb-0">This Year</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      </div>
+
       <div className="row g-4">
-        {/* Recent Activity or Chart Placeholder */}
+        
+        {/* REVENUE BREAKDOWN */}
         <div className="col-lg-8">
           <div className="bg-white rounded-5 p-5 shadow-sm border border-opacity-10 h-100">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h4 className="fw-bold mb-0 text-dark">Platform Growth</h4>
-              <div className="dropdown">
-                <button className="btn btn-light rounded-pill px-3 py-1 small fw-bold border-0 shadow-none">Last 30 Days</button>
+            <div className="d-flex justify-content-between align-items-center mb-5">
+              <h4 className="fw-bold mb-0 text-dark">Revenue Insights</h4>
+              <div className="d-flex gap-3">
+                  <div className="d-flex align-items-center gap-2 small fw-bold">
+                      <span className="rounded-circle bg-rust" style={{ width: '8px', height: '8px' }}></span> This Year
+                  </div>
+                  <div className="d-flex align-items-center gap-2 small fw-bold">
+                      <span className="rounded-circle bg-dark" style={{ width: '8px', height: '8px' }}></span> Historical
+                  </div>
               </div>
             </div>
-            <div className="chart-placeholder d-flex align-items-end gap-3" style={{ height: '300px' }}>
-              {[40, 60, 30, 80, 50, 90, 70, 45, 85, 55, 95, 65].map((h, i) => (
-                <div 
-                  key={i} 
-                  className={`flex-grow-1 rounded-top transition-all ${i % 2 === 0 ? 'bg-rust' : 'bg-dark'}`} 
-                  style={{ height: `${h}%`, opacity: 0.8 }}
-                ></div>
-              ))}
-            </div>
-            <div className="d-flex justify-content-between mt-4 text-muted small fw-bold">
-              <span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span><span>MAY</span><span>JUN</span>
-              <span>JUL</span><span>AUG</span><span>SEP</span><span>OCT</span><span>NOV</span><span>DEC</span>
+            
+            <div className="d-flex flex-column gap-4">
+                <div className="d-flex justify-content-between align-items-center p-4 rounded-4 bg-sand border border-opacity-10">
+                    <div>
+                        <p className="text-muted small fw-bold text-uppercase mb-1">Today's Revenue</p>
+                        <h4 className="fw-bold mb-0 text-dark">${stats?.revenue?.today?.toLocaleString()}</h4>
+                    </div>
+                    <FiArrowUpRight size={24} className="text-success" />
+                </div>
+                <div className="d-flex justify-content-between align-items-center p-4 rounded-4 bg-sand border border-opacity-10">
+                    <div>
+                        <p className="text-muted small fw-bold text-uppercase mb-1">Monthly Earnings</p>
+                        <h4 className="fw-bold mb-0 text-dark">${stats?.revenue?.this_month?.toLocaleString()}</h4>
+                    </div>
+                    <FiTrendingUp size={24} className="text-rust" />
+                </div>
+                <div className="d-flex justify-content-between align-items-center p-4 rounded-4 bg-sand border border-opacity-10">
+                    <div>
+                        <p className="text-muted small fw-bold text-uppercase mb-1">Annual Revenue (YTD)</p>
+                        <h4 className="fw-bold mb-0 text-dark">${stats?.revenue?.this_year?.toLocaleString()}</h4>
+                    </div>
+                    <FiDollarSign size={24} className="text-dark" />
+                </div>
             </div>
           </div>
         </div>
 
         <div className="col-lg-4">
           <div className="bg-white rounded-5 p-5 shadow-sm border border-opacity-10 h-100">
-            <h4 className="fw-bold mb-4 text-dark">System Alerts</h4>
-            <div className="d-flex flex-column gap-4">
-              {stats?.pending_approvals > 0 && (
-                <div className="d-flex gap-3">
-                  <div className="bg-rust bg-opacity-10 text-rust rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '40px', height: '40px' }}>
-                    <FiAlertCircle size={20} />
+            <h4 className="fw-bold mb-5 text-dark">Platform Status</h4>
+            <div className="d-flex flex-column gap-5">
+              {stats?.growth?.pending_salons > 0 && (
+                <div className="d-flex gap-4">
+                  <div className="bg-rust bg-opacity-10 text-rust rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '48px', height: '48px' }}>
+                    <FiAlertCircle size={24} />
                   </div>
                   <div>
-                    <h6 className="fw-bold mb-1 text-dark">Approval Needed</h6>
-                    <p className="text-muted small mb-0">{stats.pending_approvals} salons are waiting for verification.</p>
+                    <h6 className="fw-bold mb-1 text-dark">Verification Queue</h6>
+                    <p className="text-muted small mb-0">{stats.growth.pending_salons} salons are waiting for your approval to go live.</p>
                   </div>
                 </div>
               )}
-              <div className="d-flex gap-3">
-                <div className="bg-success bg-opacity-10 text-success rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '40px', height: '40px' }}>
-                  <FiTrendingUp size={20} />
+              <div className="d-flex gap-4">
+                <div className="bg-success bg-opacity-10 text-success rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '48px', height: '48px' }}>
+                  <FiUsers size={24} />
                 </div>
                 <div>
-                  <h6 className="fw-bold mb-1 text-dark">Revenue Peak</h6>
-                  <p className="text-muted small mb-0">Platform revenue reached a new monthly high today.</p>
+                  <h6 className="fw-bold mb-1 text-dark">Community Growth</h6>
+                  <p className="text-muted small mb-0">{stats.growth.total_customers} clients have registered on the platform.</p>
+                </div>
+              </div>
+              <div className="d-flex gap-4">
+                <div className="bg-dark bg-opacity-10 text-dark rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '48px', height: '48px' }}>
+                  <FiActivity size={24} />
+                </div>
+                <div>
+                  <h6 className="fw-bold mb-1 text-dark">Owner Network</h6>
+                  <p className="text-muted small mb-0">{stats.growth.total_owners} partners are managing salons on FindSalon.</p>
                 </div>
               </div>
             </div>
@@ -108,6 +206,9 @@ export default function AdminDashboard() {
       <style jsx>{`
         .hover-scale:hover { transform: translateY(-5px); }
         .letter-spaced { letter-spacing: 1px; }
+        .bg-sand { background-color: #FDFBF7; }
+        .bg-rust { background-color: #9C4A34; }
+        .text-rust { color: #9C4A34; }
       `}</style>
     </div>
   );

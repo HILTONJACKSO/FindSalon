@@ -5,9 +5,35 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import models
-from .models import Salon, SalonImage, SalonCategory
+from .models import Salon, SalonImage, SalonCategory, PortfolioItem
 from services.models import Service
-from .serializers import SalonSerializer, SalonImageSerializer, SalonCategorySerializer
+from .serializers import SalonSerializer, SalonImageSerializer, SalonCategorySerializer, PortfolioItemSerializer
+
+class PortfolioItemViewSet(viewsets.ModelViewSet):
+    queryset = PortfolioItem.objects.all().order_by('-created_at')
+    serializer_class = PortfolioItemSerializer
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['salon', 'category']
+    search_fields = ['title', 'category']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'mine']:
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        salon = Salon.objects.filter(owner=self.request.user).first()
+        if not salon:
+            from rest_framework import serializers
+            raise serializers.ValidationError({"detail": "You must create a salon profile before uploading portfolio items."})
+        serializer.save(salon=salon)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def mine(self, request):
+        items = PortfolioItem.objects.filter(salon__owner=request.user).order_by('-created_at')
+        serializer = self.get_serializer(items, many=True)
+        return Response(serializer.data)
 from django.core.cache import cache
 
 class SalonCategoryViewSet(viewsets.ModelViewSet):
@@ -70,38 +96,41 @@ class SalonViewSet(viewsets.ModelViewSet):
 
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        # Weighting: PRO (3) > TRIAL (2) > STARTER (1)
+        qs = super().get_queryset().annotate(
+            plan_weight=models.Case(
+                models.When(subscription_plan='PRO', then=models.Value(3)),
+                models.When(subscription_plan='TRIAL', then=models.Value(2)),
+                models.When(subscription_plan='STARTER', then=models.Value(1)),
+                default=models.Value(0),
+                output_field=models.IntegerField(),
+            )
+        ).order_by('-plan_weight', '-created_at')
+
         user = self.request.user
         
         # Public-facing actions should ALWAYS filter by approved and active
-        # This includes admins, so they see what customers see on the homepage.
         if self.action in ['list', 'curated']:
             return qs.filter(is_approved=True, is_active=True)
 
         if user.is_anonymous:
             return qs.filter(is_approved=True, is_active=True)
             
-        if user.role == 'ADMIN':
-            # Admins can see everything in other actions (like retrieve, or custom actions)
+        if getattr(user, 'role', None) == 'ADMIN':
             return qs
 
-        # For logged-in non-admins (OWNER, CUSTOMER)
         if self.action == 'retrieve':
-            # Allow seeing if approved OR if they are the owner
             from django.db.models import Q
             return qs.filter(Q(is_approved=True, is_active=True) | Q(owner=user))
             
         if self.action in ['mine', 'update', 'partial_update', 'destroy']:
-            # Owners MUST only see their own salons.
             return qs.filter(owner=user)
 
-            
-        # Any other action (followed, follow, etc) should only see approved
         return qs.filter(is_approved=True, is_active=True)
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.role == 'CUSTOMER':
+        if getattr(user, 'role', None) == 'CUSTOMER':
             user.role = 'OWNER'
             user.save(update_fields=['role'])
         serializer.save(owner=user)
@@ -186,7 +215,7 @@ class SalonViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def mine(self, request):
         user = request.user
-        if user.role == 'ADMIN':
+        if getattr(user, 'role', None) == 'ADMIN':
             # For Admins, we return the first salon in the system for testing purposes
             # OR an empty list if they prefer. Let's return all for full visibility.
             salons = Salon.objects.all()

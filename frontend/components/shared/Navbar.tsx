@@ -103,59 +103,59 @@ export default function Navbar({
 
 
 
-          {/* Desktop Nav Items */}
-          <div className="d-none d-lg-flex align-items-center ms-2">
-            {navItems.map((item) => (
-              <Link 
-                key={item.path} 
-                href={item.path} 
-                className={`text-decoration-none mx-3 transition-all ${isActive(item.path) ? 'text-rust fw-bold' : 'text-dark opacity-75 fw-medium hover-rust'}`}
-                style={{ fontSize: '1.05rem', letterSpacing: '-0.2px' }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
-        </div>
-
-        {/* Toggler for Mobile */}
-        <button className="navbar-toggler border-0 d-md-none shadow-none p-0" onClick={() => setIsOpen(!isOpen)} style={{ outline: 'none' }}>
-          {isOpen ? <FiX size={26} className="text-dark" /> : <FiMenu size={26} className="text-dark" />}
-        </button>
-
-        {/* Auth Items / Profile Actions */}
-        <div className="d-none d-md-flex align-items-center gap-4">
-          {mounted && (isLoggedIn ? (
-            <>
-              <Link 
-                href={user?.role === 'OWNER' ? '/owner/dashboard' : '/profile'} 
-                className="btn btn-outline-rust rounded-pill px-4 py-2 d-flex align-items-center gap-2 small fw-bold"
-              >
-                <FiLayout size={16} /> Dashboard
-              </Link>
-              <button 
-                onClick={handleSignOut}
-                className="btn btn-link text-dark opacity-75 text-decoration-none fw-bold d-flex align-items-center gap-2 p-0"
-              >
-                <FiLogOut size={18} /> Sign Out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="text-dark fw-bold text-decoration-none hover-rust">Sign In</Link>
-              <Link href="/register" className="btn btn-rust text-decoration-none px-4 py-2 rounded-pill fw-bold shadow-sm transition-all hover-scale">Join as Salon</Link>
-            </>
+        {/* Desktop Nav Items */}
+        <div className="d-none d-lg-flex align-items-center ms-2">
+          {navItems.map((item) => (
+            <Link 
+              key={item.path} 
+              href={item.path} 
+              className={`text-decoration-none mx-3 transition-all ${isActive(item.path) ? 'text-rust fw-bold' : 'text-dark opacity-75 fw-medium hover-rust'}`}
+              style={{ fontSize: '1.05rem', letterSpacing: '-0.2px' }}
+            >
+              {item.label}
+            </Link>
           ))}
         </div>
+
+      </div>
+
+      {/* Toggler for Mobile & Tablet */}
+      <button className="navbar-toggler border-0 d-lg-none shadow-none p-0" onClick={() => setIsOpen(!isOpen)} style={{ outline: 'none' }}>
+        {isOpen ? <FiX size={26} className="text-dark" /> : <FiMenu size={26} className="text-dark" />}
+      </button>
+
+      {/* Auth Items / Profile Actions */}
+      <div className="d-none d-lg-flex align-items-center gap-4">
+        {mounted && (isLoggedIn ? (
+          <>
+            <Link 
+              href={user?.role === 'OWNER' ? '/owner/dashboard' : '/profile'} 
+              className="btn btn-outline-rust rounded-pill px-4 py-2 d-flex align-items-center gap-2 small fw-bold"
+            >
+              <FiLayout size={16} /> Dashboard
+            </Link>
+            <button 
+              onClick={handleSignOut}
+              className="btn btn-link text-dark opacity-75 text-decoration-none fw-bold d-flex align-items-center gap-2 p-0"
+            >
+              <FiLogOut size={18} /> Sign Out
+            </button>
+          </>
+        ) : (
+          <>
+            <Link href="/login" className="text-dark fw-bold text-decoration-none hover-rust">Sign In</Link>
+            <Link href="/register" className="btn btn-rust text-decoration-none px-4 py-2 rounded-pill fw-bold shadow-sm transition-all hover-scale">Join as Salon</Link>
+          </>
+        ))}
+      </div>
       </div>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="w-100 bg-white shadow-lg mt-3 p-4 d-md-none position-absolute start-0" style={{ top: '100%', borderTop: '1px solid #ebe5db' }}>
+        <div className="w-100 bg-white shadow-lg mt-3 p-4 d-lg-none position-absolute start-0 animate-fade-in" style={{ top: '100%', borderTop: '1px solid #ebe5db', zIndex: 1060 }}>
           <div className="d-flex flex-column gap-3 mb-4">
             {mounted && navItems.map((item) => (
-              <Link key={item.path} href={item.path} className={`fw-bold fs-3 text-decoration-none ${isActive(item.path) ? 'text-rust' : 'text-dark'}`} onClick={() => setIsOpen(false)}>
+              <Link key={item.path} href={item.path} className={`fw-bold fs-3 text-decoration-none transition-all ${isActive(item.path) ? 'text-rust' : 'text-dark opacity-75'}`} onClick={() => setIsOpen(false)}>
                 {item.label}
               </Link>
             ))}
@@ -164,13 +164,13 @@ export default function Navbar({
           <div className="d-flex flex-column gap-3 mt-4">
             {mounted && (!isLoggedIn ? (
               <>
-                <Link href="/login" className="btn btn-outline-dark rounded-pill fw-bold py-3 fs-5" onClick={() => setIsOpen(false)}>Sign In</Link>
-                <Link href="/register" className="btn btn-rust rounded-pill fw-bold py-3 fs-5" onClick={() => setIsOpen(false)}>Join as Salon</Link>
+                <Link href="/login" className="btn btn-outline-dark rounded-pill fw-bold py-3 fs-5 shadow-sm" onClick={() => setIsOpen(false)}>Sign In</Link>
+                <Link href="/register" className="btn btn-rust rounded-pill fw-bold py-3 fs-5 shadow-sm" onClick={() => setIsOpen(false)}>Join as Salon</Link>
               </>
             ) : (
               <>
-                <Link href={user?.role === 'OWNER' ? '/owner/dashboard' : '/profile'} className="btn btn-outline-rust rounded-pill fw-bold py-3 fs-5" onClick={() => setIsOpen(false)}>Dashboard</Link>
-                <button onClick={handleSignOut} className="btn btn-rust rounded-pill fw-bold py-3 fs-5">Sign Out</button>
+                <Link href={user?.role === 'OWNER' ? '/owner/dashboard' : '/profile'} className="btn btn-outline-rust rounded-pill fw-bold py-3 fs-5 shadow-sm" onClick={() => setIsOpen(false)}>Dashboard</Link>
+                <button onClick={handleSignOut} className="btn btn-rust rounded-pill fw-bold py-3 fs-5 shadow-sm">Sign Out</button>
               </>
             ))}
           </div>

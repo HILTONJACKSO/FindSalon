@@ -105,10 +105,8 @@ class AnalyticsService:
         # Appointments Today
         apps_today = Booking.objects.filter(salon__in=salons, date=now.date()).count()
         
-        # New Customers (Simplified)
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        new_customers = User.objects.filter(role='CUSTOMER', date_joined__gte=this_month_start).count()
+        # New Customers (Count unique users who booked with these salons this month)
+        new_customers = Booking.objects.filter(salon__in=salons, created_at__gte=this_month_start).values('user').distinct().count()
         
         # Weekly Growth
         weekly_growth = []
@@ -161,4 +159,49 @@ class AnalyticsService:
             'recent_activity': recent_activity,
             'low_stock_count': low_stock_count,
             'top_service': top_service
+        }
+    @staticmethod
+    def get_admin_overview():
+        now = timezone.now()
+        
+        # 1. TIME-BASED RANGES
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # 2. BOOKING AGGREGATIONS
+        bookings = Booking.objects.all()
+        booking_stats = {
+            "today": bookings.filter(created_at__gte=today_start).count(),
+            "this_month": bookings.filter(created_at__gte=month_start).count(),
+            "this_year": bookings.filter(created_at__gte=year_start).count(),
+            "total": bookings.count()
+        }
+        
+        # 3. REVENUE AGGREGATIONS (Completed Payments)
+        payments = Payment.objects.filter(status=Payment.Status.COMPLETED)
+        revenue_stats = {
+            "today": float(payments.filter(created_at__gte=today_start).aggregate(Sum('amount'))['amount__sum'] or 0),
+            "this_month": float(payments.filter(created_at__gte=month_start).aggregate(Sum('amount'))['amount__sum'] or 0),
+            "this_year": float(payments.filter(created_at__gte=year_start).aggregate(Sum('amount'))['amount__sum'] or 0),
+            "total": float(payments.aggregate(Sum('amount'))['amount__sum'] or 0)
+        }
+        
+        # 4. GROWTH STATS
+        from django.contrib.auth import get_user_model
+        from salons.models import Salon
+        User = get_user_model()
+        
+        growth_stats = {
+            "total_salons": Salon.objects.count(),
+            "pending_salons": Salon.objects.filter(is_approved=False).count(),
+            "total_customers": User.objects.filter(role='CUSTOMER').count(),
+            "total_owners": User.objects.filter(role='OWNER').count(),
+        }
+        
+        return {
+            "bookings": booking_stats,
+            "revenue": revenue_stats,
+            "growth": growth_stats,
+            "generated_at": now.isoformat()
         }

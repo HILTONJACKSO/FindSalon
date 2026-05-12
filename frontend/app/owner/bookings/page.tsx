@@ -14,7 +14,7 @@ import {
     FiFileText,
     FiLoader
 } from 'react-icons/fi';
-import { api } from '@/lib/api';
+import { api, getImageUrl } from '@/lib/api';
 import OwnerHeader from '@/components/owner/OwnerHeader';
 import { useAuthStore } from '@/store/authStore';
 import { 
@@ -34,6 +34,7 @@ import {
 
 export default function BookingsManagementPage() {
   const [bookings, setBookings] = React.useState<any[]>([]);
+  const [staff, setStaff] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [actionLoading, setActionLoading] = React.useState<number | null>(null);
   
@@ -41,6 +42,7 @@ export default function BookingsManagementPage() {
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [selectedBooking, setSelectedBooking] = React.useState<any>(null);
+  const [selectedStylist, setSelectedStylist] = React.useState('All Stylists');
 
   const fetchBookings = async () => {
     try {
@@ -48,18 +50,30 @@ export default function BookingsManagementPage() {
       setBookings(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching bookings:', error);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const fetchStaff = async () => {
+    try {
+      const response = await api.get('/staff/');
+      setStaff(response.data.results || response.data || []);
+    } catch (error) {
+      console.error('Error fetching staff:', error);
     }
   };
 
   React.useEffect(() => {
-    fetchBookings();
+    const initFetch = async () => {
+      setLoading(true);
+      await Promise.all([fetchBookings(), fetchStaff()]);
+      setLoading(false);
+    };
+    initFetch();
     const interval = setInterval(fetchBookings, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
   }, []);
 
-  const handleAction = async (id: number, action: 'accept' | 'reject') => {
+  const handleAction = async (id: number, action: 'accept' | 'reject' | 'complete') => {
     setActionLoading(id);
     try {
       await api.post(`/bookings/${id}/${action}/`);
@@ -116,12 +130,28 @@ export default function BookingsManagementPage() {
             </div>
             <div className="d-flex align-items-center">
                 <div className="d-flex align-items-center me-2">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="rounded-circle border border-2 border-white shadow-sm overflow-hidden" style={{ width: '32px', height: '32px', marginLeft: i > 1 ? '-10px' : '0' }}>
-                            <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="team" className="w-100 h-100 object-fit-cover" />
-                        </div>
-                    ))}
-                    <div className="rounded-circle border border-2 border-white shadow-sm bg-sand d-flex align-items-center justify-content-center fw-bold text-muted small" style={{ width: '32px', height: '32px', marginLeft: '-10px', fontSize: '0.65rem' }}>+8</div>
+                    {staff.length > 0 ? (
+                        <>
+                            {staff.slice(0, 3).map((member, i) => (
+                                <div key={member.id} className="rounded-circle border border-2 border-white shadow-sm overflow-hidden bg-sand d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px', marginLeft: i > 0 ? '-10px' : '0' }}>
+                                    {member.avatar ? (
+                                        <img src={getImageUrl(member.avatar)} alt="team" className="w-100 h-100 object-fit-cover" />
+                                    ) : (
+                                        <span className="fw-bold text-rust" style={{ fontSize: '0.6rem' }}>
+                                            {member.full_name?.split(' ').map((n: any) => n[0]).join('').toUpperCase()}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                            {staff.length > 3 && (
+                                <div className="rounded-circle border border-2 border-white shadow-sm bg-sand d-flex align-items-center justify-content-center fw-bold text-muted small" style={{ width: '32px', height: '32px', marginLeft: '-10px', fontSize: '0.65rem' }}>
+                                    +{staff.length - 3}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="text-muted small fw-bold opacity-50">NO STAFF ADDED</div>
+                    )}
                 </div>
             </div>
         </div>
@@ -203,13 +233,20 @@ export default function BookingsManagementPage() {
                 </div>
             </div>
 
-            {/* QUICK FILTERS */}
             <div className="bg-white rounded-5 p-4 shadow-sm border border-opacity-10 pb-5" style={{ backgroundColor: '#FDFBF7' }}>
                 <h6 className="fw-bold mb-4 opacity-75 small letter-spaced" style={{ letterSpacing: '1px' }}>QUICK FILTERS</h6>
                 <div className="mb-4">
                     <label className="text-muted small fw-bold mb-2">Stylist</label>
-                    <select className="form-select rounded-4 border-0 shadow-sm py-3 px-4 fw-medium text-muted" style={{ fontSize: '0.9rem' }}>
+                    <select 
+                        value={selectedStylist}
+                        onChange={(e) => setSelectedStylist(e.target.value)}
+                        className="form-select rounded-4 border-0 shadow-sm py-3 px-4 fw-medium text-muted" 
+                        style={{ fontSize: '0.9rem' }}
+                    >
                         <option>All Stylists</option>
+                        {staff.map(member => (
+                            <option key={member.id} value={member.id}>{member.full_name}</option>
+                        ))}
                     </select>
                 </div>
                 <div className="mb-2">
@@ -339,8 +376,7 @@ export default function BookingsManagementPage() {
                                      <span className="text-muted small fw-medium">Not Assigned</span>
                                 </div>
                             </div>
-                            <div className="col-auto text-end ps-4 border-start">
-                                {apt.status === 'PENDING' ? (
+                            <div className="col-auto text-end ps-4 border-start">                                 {apt.status === 'PENDING' ? (
                                     <div className="d-flex gap-2">
                                         <button 
                                             disabled={actionLoading === apt.id}
@@ -357,6 +393,22 @@ export default function BookingsManagementPage() {
                                             Decline
                                         </button>
                                     </div>
+                                ) : apt.status === 'CONFIRMED' ? (
+                                    <div className="d-flex gap-2">
+                                        <button 
+                                            disabled={actionLoading === apt.id}
+                                            onClick={() => handleAction(apt.id, 'complete')}
+                                            className="btn btn-rust rounded-pill px-4 py-2 fw-bold text-white shadow-sm small border-0"
+                                        >
+                                            {actionLoading === apt.id ? '...' : 'Mark as Done'}
+                                        </button>
+                                        <button 
+                                            onClick={() => setSelectedBooking(apt)}
+                                            className="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold small border-opacity-10"
+                                        >
+                                            Details
+                                        </button>
+                                    </div>
                                 ) : apt.status === 'COMPLETED' ? (
                                     <button className="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold small border-opacity-10">Invoice</button>
                                 ) : (
@@ -367,6 +419,7 @@ export default function BookingsManagementPage() {
                                         View Details
                                     </button>
                                 )}
+
                             </div>
                         </div>
                     </div>

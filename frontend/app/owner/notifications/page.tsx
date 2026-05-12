@@ -1,0 +1,140 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { FiBell, FiCheckCircle, FiInfo, FiTag, FiClock } from 'react-icons/fi';
+import { api } from '@/lib/api';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export default function OwnerNotifications() {
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchNotifications = async () => {
+        try {
+            const res = await api.get('/notifications/');
+            setNotifications(res.data.results || res.data);
+        } catch (err) {
+            console.error("Failed to fetch notifications", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const markAsRead = async (id: number) => {
+        try {
+            await api.patch(`/notifications/${id}/`, { is_read: true });
+            setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+        } catch (err) {
+            console.error("Failed to mark notification as read", err);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        // Implementation for marking all as read would go here
+        // For now, let's just update local state if backend supports bulk
+        setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+    };
+
+    const getIcon = (type: string) => {
+        switch (type) {
+            case 'APPROVAL': return <FiCheckCircle className="text-success" />;
+            case 'BROADCAST': return <FiBell className="text-rust" />;
+            case 'PROMOTION': return <FiTag className="text-warning" />;
+            default: return <FiInfo className="text-primary" />;
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="d-flex min-vh-50 align-items-center justify-content-center">
+                <div className="spinner-border text-rust" role="status"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="pb-5">
+            <div className="d-flex justify-content-between align-items-center mb-5">
+                <div>
+                    <h1 className="fw-bold display-5 mb-1" style={{ color: '#1E1915' }}>Notifications</h1>
+                    <p className="text-muted">Stay updated with platform announcements and business alerts.</p>
+                </div>
+                {notifications.some(n => !n.is_read) && (
+                    <button 
+                        onClick={markAllAsRead}
+                        className="btn btn-outline-dark rounded-pill px-4 fw-bold d-flex align-items-center gap-2"
+                    >
+                        <FiCheckCircle size={18} /> Mark all as read
+                    </button>
+                )}
+            </div>
+
+            <div className="row justify-content-center">
+                <div className="col-lg-10">
+                    <div className="bg-white rounded-5 shadow-sm border border-opacity-10 overflow-hidden">
+                        <AnimatePresence mode='popLayout'>
+                            {notifications.length > 0 ? (
+                                notifications.map((notification, index) => (
+                                    <motion.div 
+                                        key={notification.id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className={`p-4 border-bottom border-opacity-10 transition-all ${!notification.is_read ? 'bg-rust bg-opacity-10 border-start border-4 border-rust' : 'hover-bg-light'}`}
+                                        style={{ borderColor: !notification.is_read ? '#9C4A34' : 'rgba(0,0,0,0.05)' }}
+                                    >
+                                        <div className="d-flex gap-4">
+                                            <div className={`rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm ${!notification.is_read ? 'bg-white' : 'bg-light'}`} style={{ width: '56px', height: '56px' }}>
+                                                {getIcon(notification.type)}
+                                            </div>
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex justify-content-between align-items-start mb-1">
+                                                    <h5 className={`fw-bold mb-0 ${!notification.is_read ? 'text-dark' : 'text-muted'}`}>{notification.title}</h5>
+                                                    <span className="text-muted small d-flex align-items-center gap-1">
+                                                        <FiClock size={12} /> {new Date(notification.created_at).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                <p className={`mb-3 ${!notification.is_read ? 'text-dark' : 'text-muted-dark'}`} style={{ fontSize: '1.05rem', lineHeight: '1.6' }}>
+                                                    {notification.message}
+                                                </p>
+                                                {!notification.is_read && (
+                                                    <button 
+                                                        onClick={() => markAsRead(notification.id)}
+                                                        className="btn btn-link text-rust p-0 fw-bold text-decoration-none small"
+                                                    >
+                                                        Mark as read
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))
+                            ) : (
+                                <div className="p-5 text-center py-5">
+                                    <div className="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style={{ width: '80px', height: '80px' }}>
+                                        <FiBell size={40} className="text-muted opacity-50" />
+                                    </div>
+                                    <h4 className="fw-bold mb-2">No notifications yet</h4>
+                                    <p className="text-muted mx-auto" style={{ maxWidth: '300px' }}>When you receive platform updates or alerts, they'll appear here.</p>
+                                </div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            </div>
+
+            <style jsx>{`
+                .hover-bg-light:hover {
+                    background-color: #FDFBF7;
+                }
+                .text-muted-dark {
+                    color: #666;
+                }
+            `}</style>
+        </div>
+    );
+}

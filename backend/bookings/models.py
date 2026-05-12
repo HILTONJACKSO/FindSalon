@@ -17,6 +17,15 @@ class Booking(models.Model):
     date = models.DateField(db_index=True)
     start_time = models.TimeField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True)
+    
+    # Financial Tracking
+    transaction_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    deposit_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    balance_due = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    platform_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    salon_wallet_credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

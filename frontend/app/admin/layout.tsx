@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   FiGrid, FiUsers, FiDollarSign, FiSettings, FiLogOut, 
-  FiMenu, FiX, FiShield, FiAlertCircle, FiZap
+  FiMenu, FiX, FiShield, FiAlertCircle, FiZap, FiShoppingBag, FiBell
 } from 'react-icons/fi';
 
 import { useAuthStore } from '@/store/authStore';
@@ -39,7 +39,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const menuItems = [
     { label: 'Overview', icon: <FiGrid />, path: '/admin/dashboard' },
     { label: 'Salons', icon: <FiShield />, path: '/admin/salons' },
-    { label: 'Ads Management', icon: <FiZap />, path: '/admin/ads' },
+    { label: 'Wholesale Items', icon: <FiShoppingBag />, path: '/admin/wholesale' },
+    { label: 'Broadcast Alerts', icon: <FiBell />, path: '/admin/broadcast' },
     { label: 'Revenue', icon: <FiDollarSign />, path: '/admin/revenue' },
     { label: 'Settings', icon: <FiSettings />, path: '/admin/settings' },
   ];
@@ -47,8 +48,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="admin-container d-flex bg-sand min-vh-100">
       {/* Sidebar */}
-      <aside className={`admin-sidebar bg-dark text-white p-4 transition-all ${isSidebarOpen ? 'open' : 'closed'}`}>
-        <div className="d-flex align-items-center justify-content-between mb-5">
+      <aside className={`admin-sidebar bg-dark text-white p-4 d-flex flex-column transition-all ${isSidebarOpen ? 'open' : 'closed'}`}>
+        <div className="d-flex align-items-center justify-content-between mb-5 flex-shrink-0">
           <div className="d-flex align-items-center gap-2">
             <div className="bg-rust rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '35px', height: '35px' }}>
               <FiShield className="text-white" size={18} />
@@ -60,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
 
-        <nav className="nav flex-column gap-2">
+        <nav className="nav flex-column gap-2 flex-grow-1 overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 200px)' }}>
           {menuItems.map((item) => (
             <Link 
               key={item.path} 
@@ -74,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        <div className="mt-auto pt-5">
+        <div className="mt-auto pt-4 flex-shrink-0">
           <button 
             className="btn btn-link text-decoration-none d-flex align-items-center gap-3 p-3 w-100 text-start hover-text-white"
             style={{ color: 'white' }}
@@ -117,10 +118,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           position: sticky;
           top: 0;
           z-index: 1000;
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(156, 74, 52, 0.5) transparent;
+        }
+        .admin-sidebar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .admin-sidebar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .admin-sidebar::-webkit-scrollbar-thumb {
+          background-color: rgba(156, 74, 52, 0.3);
+          border-radius: 10px;
+        }
+        .admin-sidebar::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(156, 74, 52, 0.6);
         }
         .admin-sidebar.closed {
           width: 80px;
           padding: 1.5rem 1rem !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(156, 74, 52, 0.3);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(156, 74, 52, 0.6);
         }
         .hover-bg-white-10:hover {
           background-color: rgba(255, 255, 255, 0.05);
@@ -134,6 +164,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
         .letter-spaced {
           letter-spacing: 1px;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
         @media (max-width: 768px) {
           .admin-sidebar {

@@ -62,7 +62,7 @@ export default function OwnerAdsPage() {
 
       
       if (salonsList.length > 0 && !currentAd.salon) {
-        setCurrentAd(prev => ({ ...prev, salon: salonsList[0].id }));
+        setCurrentAd((prev: any) => ({ ...prev, salon: salonsList[0].id }));
       }
       setLoading(false);
     } catch (err) {

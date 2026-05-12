@@ -16,6 +16,8 @@ class Service(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     duration = models.PositiveIntegerField(help_text="Duration in minutes")
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     max_staff = models.PositiveIntegerField(default=1)
     image = models.ImageField(upload_to='services/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
