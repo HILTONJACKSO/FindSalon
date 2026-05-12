@@ -19,7 +19,11 @@ export default function OwnerHeader({ onQuickAction, searchPlaceholder, actionLa
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
+  const { token, initialized, user: profileStore } = useAuthStore();
+
   useEffect(() => {
+    if (!initialized || !token) return;
+
     const fetchData = async () => {
       try {
         // 1. Fetch Profile
@@ -63,7 +67,7 @@ export default function OwnerHeader({ onQuickAction, searchPlaceholder, actionLa
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [token, initialized]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 

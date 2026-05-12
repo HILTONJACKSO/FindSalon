@@ -18,6 +18,7 @@ import {
     FiDollarSign
 } from 'react-icons/fi';
 import { api, getImageUrl } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
@@ -93,7 +94,11 @@ export default function SettingsPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
+  const { token, initialized } = useAuthStore();
+
   useEffect(() => {
+    if (!initialized || !token) return;
+
     const fetchSalon = async () => {
       try {
         const res = await api.get('/salons/mine/');
@@ -140,7 +145,7 @@ export default function SettingsPage() {
     fetchCategories();
     fetchProfile();
     setLoading(false);
-  }, []);
+  }, [token, initialized]);
 
   useEffect(() => {
     // Check if there is a tab in the URL

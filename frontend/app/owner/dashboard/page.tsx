@@ -21,7 +21,11 @@ const PortfolioManager = () => {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
+    const { token, initialized } = useAuthStore();
+
     useEffect(() => {
+        if (!initialized || !token) return;
+
         const fetchData = async () => {
             try {
                 const [portfolioRes, servicesRes] = await Promise.all([
@@ -38,7 +42,7 @@ const PortfolioManager = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [token, initialized]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -213,7 +217,11 @@ export default function OwnerDashboard() {
   const [salon, setSalon] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const { token, initialized } = useAuthStore();
+
   useEffect(() => {
+    if (!initialized || !token) return;
+
     const fetchDashboardData = async () => {
       try {
         const [analyticsRes, salonRes] = await Promise.all([
@@ -230,7 +238,7 @@ export default function OwnerDashboard() {
       }
     };
     fetchDashboardData();
-  }, []);
+  }, [token, initialized]);
 
   if (loading) {
       return (

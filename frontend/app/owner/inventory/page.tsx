@@ -5,6 +5,7 @@ import { FiPlus, FiAlertCircle, FiTrendingDown, FiArrowRight, FiMoreHorizontal, 
 import OwnerHeader from '@/components/owner/OwnerHeader';
 
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
 const ProGate = ({ plan, children, featureName }: { plan: string, children: React.ReactNode, featureName: string }) => {
     if (plan === 'PRO' || plan === 'TRIAL') return <>{children}</>;
@@ -160,13 +161,17 @@ export default function InventoryPage() {
     }
   };
 
+  const { token, initialized } = useAuthStore();
+
   React.useEffect(() => {
+    if (!initialized || !token) return;
+
     fetchCategories();
     fetchInventory();
     fetchSalon();
     const interval = setInterval(fetchInventory, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [token, initialized]);
 
   const userPlan = salon?.subscription_plan || 'STARTER';
   const outOfStockCount = inventory.filter(i => i.quantity === 0).length;
