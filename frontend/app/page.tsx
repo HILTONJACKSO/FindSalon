@@ -154,7 +154,7 @@ export default function Home() {
                 transition={{ duration: 0.8 }}
               >
                 <h1 className="fw-bold mb-0" style={{ fontSize: 'var(--fs-display)', lineHeight: '1.1', letterSpacing: '-2px', color: '#5D2E17' }}>
-                  <span>Book. Arrive.</span> <br />
+                  <span style={{ whiteSpace: 'nowrap' }}>Book. Arrive.</span> <br />
                   <span className="font-serif-italic position-relative ms-0 ms-lg-0 d-inline-block" style={{ fontSize: '1.1em', fontStyle: 'italic', color: '#B45309' }}>
                     Glow.
                     <motion.span 
