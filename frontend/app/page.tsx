@@ -147,14 +147,14 @@ export default function Home() {
         <div className="container position-relative pb-5 mt-4 mt-lg-5" style={{ zIndex: 1 }}>
           <div className="row align-items-center g-5">
             {/* Left Content */}
-            <div className="col-lg-5 text-center text-lg-start">
+            <div className="col-lg-6 text-center text-lg-start">
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
               >
                 <h1 className="fw-bold mb-0" style={{ fontSize: 'var(--fs-display)', lineHeight: '1.1', letterSpacing: '-2px', color: '#5D2E17' }}>
-                  <span style={{ whiteSpace: 'nowrap' }}>Book. Arrive.</span> <br />
+                  <span>Book. Arrive.</span> <br />
                   <span className="font-serif-italic position-relative ms-0 ms-lg-0 d-inline-block" style={{ fontSize: '1.1em', fontStyle: 'italic', color: '#B45309' }}>
                     Glow.
                     <motion.span 
@@ -185,7 +185,7 @@ export default function Home() {
             </div>
 
             {/* Right Visuals - Elite Organic Composition */}
-            <div className="col-lg-7 position-relative mt-4 mt-lg-0 d-flex justify-content-center align-items-center">
+            <div className="col-lg-6 position-relative mt-4 mt-lg-0 d-flex justify-content-center align-items-center">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}

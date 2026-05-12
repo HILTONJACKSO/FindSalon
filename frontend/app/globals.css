@@ -20,7 +20,7 @@ html {
   --fs-md: clamp(1.15rem, 1.1rem + 0.5vw, 1.4rem);
   --fs-lg: clamp(1.4rem, 1.3rem + 0.8vw, 2rem);
   --fs-xl: clamp(2rem, 1.8rem + 1.5vw, 3.5rem);
-  --fs-display: clamp(2.5rem, 2.2rem + 4vw, 6rem);
+  --fs-display: clamp(2.4rem, 2rem + 4vw, 5rem);
 }
 
 
