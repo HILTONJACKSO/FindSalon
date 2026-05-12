@@ -804,7 +804,9 @@ export default function Home() {
             padding: 'clamp(24px, 4vw, 40px)',
             color: 'white',
             border: '1px solid rgba(255,255,255,0.05)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             <div className="d-flex align-items-center gap-3 mb-4">
               <div className="bg-rust bg-opacity-20 p-2 rounded-3">
@@ -816,9 +818,9 @@ export default function Home() {
               Track your revenue and bookings with powerful smart tools.
             </p>
             {/* Mock Chart Visual */}
-            <div className="d-flex align-items-end gap-2 h-50 pt-2">
+            <div className="d-flex align-items-end gap-2 flex-grow-1 pt-3" style={{ minHeight: '120px' }}>
               {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
-                <div key={i} className="flex-grow-1 bg-rust bg-opacity-30 rounded-top transition-all hover-bg-rust" style={{ height: `${h}%`, minWidth: '10px' }}></div>
+                <div key={i} className="flex-grow-1 bg-rust bg-opacity-30 rounded-top transition-all hover-bg-rust" style={{ height: `${h}%`, minWidth: '8px' }}></div>
               ))}
             </div>
           </div>
