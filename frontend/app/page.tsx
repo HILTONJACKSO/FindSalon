@@ -30,7 +30,7 @@ const SectionCarousel = ({ children, title, subtitle, badgeIcon, badgeText, view
   };
 
   return (
-    <section className="section-py container">
+    <section className="section-py container mt-5 pt-lg-4">
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4 mb-md-5 gap-3 gap-md-4">
         <div>
           {badgeText && (
