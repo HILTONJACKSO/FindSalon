@@ -101,7 +101,7 @@ const PortfolioManager = () => {
             <div className="row g-3 g-md-4">
                 {items.length === 0 ? (
                     <div className="col-12">
-                        <div className="bg-sand bg-opacity-50 rounded-5 p-5 text-center border border-dashed border-2 opacity-75">
+                        <div className="bg-sand bg-opacity-50 rounded-5 adaptive-p text-center border border-dashed border-2 opacity-75">
                             <FiImage size={48} className="mb-3 text-muted opacity-50" />
                             <p className="fw-bold mb-0">No styles uploaded yet.</p>
                             <p className="text-muted small">Showcase your best work to attract more bookings.</p>
@@ -109,10 +109,10 @@ const PortfolioManager = () => {
                     </div>
                 ) : (
                     items.map(item => (
-                        <div key={item.id} className="col-6 col-md-4 col-xl-2">
-                            <div className="position-relative overflow-hidden rounded-4 shadow-sm group" style={{ height: 'clamp(140px, 20vw, 200px)' }}>
+                        <div key={item.id} className="col-6 col-sm-4 col-md-3 col-xl-2">
+                            <div className="position-relative overflow-hidden rounded-4 shadow-sm group" style={{ height: 'clamp(140px, 30vw, 200px)' }}>
                                 <img src={item.image} className="w-100 h-100 object-fit-cover transition-all group-hover:scale-110" alt={item.title} />
-                                <div className="position-absolute bottom-0 start-0 w-100 p-2" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
+                                <div className="position-absolute bottom-0 start-0 w-100 p-2 p-md-3" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}>
                                     <p className="text-white small mb-0 fw-bold text-truncate" style={{ fontSize: '0.7rem' }}>{item.title}</p>
                                     <p className="text-white-50 mb-0" style={{ fontSize: '0.6rem' }}>${item.price}</p>
                                 </div>
@@ -310,12 +310,12 @@ export default function OwnerDashboard() {
       <OwnerHeader />
 
       {/* PAGE TITLE */}
-      <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-5 mt-4 gap-4">
+      <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-5 mt-4 gap-4 px-2 px-md-0">
         <div>
-           <h1 className="fw-bold mb-2" style={{ fontSize: 'var(--fs-xl)', letterSpacing: '-1.5px' }}>Dashboard Overview</h1>
+           <h1 className="fw-bold mb-2" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', letterSpacing: '-1.5px' }}>Dashboard Overview</h1>
            <p className="text-muted mb-0 small">Welcome back, your salon is performing beautifully today.</p>
         </div>
-        <div className="bg-white rounded-4 p-3 shadow-sm d-flex align-items-center justify-content-between gap-3 border border-opacity-10">
+        <div className="bg-white rounded-4 p-3 shadow-sm d-flex align-items-center justify-content-between gap-3 border border-opacity-10 w-fit">
             <div className="d-flex flex-column">
                 <span className="text-muted fw-bold" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>PLAN</span>
                 <span className="fw-bold text-dark d-flex align-items-center gap-2 small">
@@ -333,18 +333,18 @@ export default function OwnerDashboard() {
       {/* KPI GRID */}
       <div className="row g-4 mb-5">
         {kpis.map((kpi, idx) => (
-          <div key={idx} className="col-12 col-md-6 col-xl-3">
-            <div className={`rounded-5 p-4 shadow-sm border border-opacity-10 h-100 transition-all hover-scale cursor-pointer position-relative overflow-hidden bg-${kpi.color} text-white`}>
+          <div key={idx} className="col-12 col-sm-6 col-xl-3">
+            <div className={`rounded-5 adaptive-p shadow-sm border border-opacity-10 h-100 transition-all hover-scale cursor-pointer position-relative overflow-hidden bg-${kpi.color} text-white`}>
                 <div className="d-flex justify-content-between align-items-start mb-4">
-                    <div className="bg-white bg-opacity-20 rounded-pill p-2 p-md-3 text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                    <div className="bg-white bg-opacity-20 rounded-pill p-2 text-white d-flex align-items-center justify-content-center" style={{ width: '44px', height: '44px' }}>
                         {kpi.icon}
                     </div>
                     <span className="fw-bold bg-white text-dark rounded-pill px-2 py-1 shadow-sm" style={{ fontSize: '0.65rem' }}>
                         {kpi.growth || kpi.current}
                     </span>
                 </div>
-                <div className="text-white-50 small fw-bold mb-1" style={{ fontSize: 'var(--fs-xs)' }}>{kpi.label}</div>
-                <h2 className="fw-bold mb-0" style={{ fontSize: 'var(--fs-lg)', letterSpacing: '-1px' }}>{kpi.value}</h2>
+                <div className="text-white-50 small fw-bold mb-1 text-uppercase letter-spaced" style={{ fontSize: '0.6rem' }}>{kpi.label}</div>
+                <h2 className="fw-bold mb-0" style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', letterSpacing: '-1px' }}>{kpi.value}</h2>
             </div>
           </div>
         ))}
@@ -400,13 +400,13 @@ export default function OwnerDashboard() {
 
         {/* RECENT ACTIVITY */}
         <div className="col-12 col-xl-4">
-            <div className="bg-white rounded-5 p-4 p-md-5 shadow-sm border border-opacity-10 h-100 d-flex flex-column">
+            <div className="bg-white rounded-5 adaptive-p shadow-sm border border-opacity-10 h-100 d-flex flex-column">
                 <h4 className="fw-bold mb-5">Recent Activity</h4>
-                <div className="d-flex flex-column gap-5 flex-grow-1">
+                <div className="d-flex flex-column gap-4 flex-grow-1">
                     {recentActivity.map((act: any) => (
-                        <div key={act.id} className="d-flex align-items-center gap-4">
+                        <div key={act.id} className="d-flex align-items-center gap-3 gap-md-4">
                             <div className="position-relative flex-shrink-0">
-                                <div className="rounded-circle overflow-hidden bg-sand border border-white border-2 shadow-sm d-flex align-items-center justify-content-center" style={{ width: '56px', height: '56px' }}>
+                                <div className="rounded-circle overflow-hidden bg-sand border border-white border-2 shadow-sm d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
                                     {act.avatar ? (
                                         <img src={getImageUrl(act.avatar)} alt={act.user} className="w-100 h-100 object-fit-cover" />
                                     ) : (
@@ -417,19 +417,19 @@ export default function OwnerDashboard() {
                                 </div>
                             </div>
                             <div className="flex-grow-1 min-w-0">
-                                <div className="d-flex justify-content-between align-items-start">
-                                    <h6 className="fw-bold mb-0 text-truncate">{act.user}</h6>
-                                    {act.status && <span className={`badge rounded-pill px-3 py-1 fw-bold fs-7 ${act.badgeColor}`} style={{ fontSize: '0.6rem' }}>{act.status}</span>}
+                                <div className="d-flex justify-content-between align-items-start gap-2">
+                                    <h6 className="fw-bold mb-0 text-truncate small">{act.user}</h6>
+                                    {act.status && <span className={`badge rounded-pill px-2 py-1 fw-bold ${act.badgeColor}`} style={{ fontSize: '0.55rem' }}>{act.status}</span>}
                                 </div>
-                                <p className="text-muted small mb-1 text-truncate">{act.action}</p>
-                                <span className="text-muted opacity-50" style={{ fontSize: '0.7rem' }}>{act.time}</span>
+                                <p className="text-muted tiny mb-1 text-truncate">{act.action}</p>
+                                <span className="text-muted opacity-50" style={{ fontSize: '0.65rem' }}>{act.time}</span>
                             </div>
                         </div>
                     ))}
                 </div>
                 <div className="mt-5 pt-4">
                     <button className="btn btn-outline-rust w-100 rounded-pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2">
-                        View All Activity <FiArrowRight size={18} />
+                        View All <FiArrowRight size={18} />
                     </button>
                 </div>
             </div>

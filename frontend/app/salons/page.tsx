@@ -19,6 +19,109 @@ const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
   </motion.div>
 );
 
+const FilterContent = ({ 
+  searchQuery, setSearchQuery, 
+  minPrice, setMinPrice, 
+  maxPrice, setMaxPrice, 
+  minRating, setMinRating, 
+  selectedServices, setSelectedServices 
+}: any) => (
+  <>
+    <div className="d-flex align-items-center gap-2 mb-4">
+      <FiSliders className="text-rust" />
+      <h5 className="fw-bold mb-0 font-serif-italic">Refine Search</h5>
+    </div>
+
+    <div className="mb-4">
+      <label className="fw-bold small text-muted mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.65rem' }}>Location & Name</label>
+      <div className="glass-input-wrapper position-relative">
+         <FiSearch className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted opacity-50" size={18} />
+         <input 
+            type="text" 
+            placeholder="Search salons..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="form-control rounded-pill ps-5 py-3 border-light shadow-sm fw-medium"
+            style={{ fontSize: '0.9rem' }}
+         />
+      </div>
+    </div>
+
+    <div className="mb-4 pt-4 border-top border-light">
+      <label className="fw-bold small text-muted mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.65rem' }}>Price Range</label>
+      <div className="d-flex align-items-center gap-2">
+         <input 
+            type="number" 
+            placeholder="Min" 
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value === '' ? '' : Number(e.target.value))}
+            className="form-control rounded-pill border-light shadow-sm text-center py-2 fw-bold"
+            style={{ fontSize: '0.8rem' }}
+         />
+         <span className="text-muted opacity-30">—</span>
+         <input 
+            type="number" 
+            placeholder="Max" 
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
+            className="form-control rounded-pill border-light shadow-sm text-center py-2 fw-bold"
+            style={{ fontSize: '0.8rem' }}
+         />
+      </div>
+    </div>
+
+    <div className="mb-4 pt-4 border-top border-light">
+      <label className="fw-bold small text-muted mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.65rem' }}>Minimum Excellence</label>
+      <div className="d-flex flex-column gap-3">
+        {[4.5, 4.0, 0].map((rating: number) => (
+          <label key={rating} className="d-flex align-items-center cursor-pointer group">
+            <div className="position-relative d-flex align-items-center justify-content-center" style={{ width: '20px', height: '20px' }}>
+              <input 
+                type="radio" 
+                name="rating" 
+                className="form-check-input mt-0 border-rust shadow-none" 
+                onChange={() => setMinRating(rating)}
+                checked={minRating === rating} 
+              />
+            </div>
+            <span className={`ms-3 small fw-bold ${minRating === rating ? 'text-rust' : 'text-muted opacity-75'}`}>
+              {rating === 0 ? 'All Ratings' : `${rating}+ Stars`}
+            </span>
+            {rating > 0 && <FiStar className={`ms-2 ${minRating === rating ? 'text-warning fill-warning' : 'text-muted opacity-30'}`} size={12} />}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    <div className="mb-4 pt-4 border-top border-light">
+      <label className="fw-bold small text-muted mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.65rem' }}>Bespoke Services</label>
+      <div className="d-flex flex-wrap gap-2">
+        {['Haircut', 'Coloring', 'Manicure', 'Facial', 'Massage', 'Braids'].map((service) => (
+          <button 
+            key={service} 
+            onClick={() => {
+              setSelectedServices((prev: string[]) => prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]);
+            }}
+            className={`btn btn-sm rounded-pill px-3 py-2 fw-bold transition-all ${
+              selectedServices.includes(service) ? 'bg-rust text-white shadow-lg' : 'bg-light text-muted border-0'
+            }`}
+            style={{ fontSize: '0.7rem' }}
+          >
+            {service.toUpperCase()}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <button 
+      onClick={() => { setSearchQuery(''); setMinRating(0); setMinPrice(''); setMaxPrice(''); setSelectedServices([]); }}
+      className="btn btn-link text-muted text-decoration-none w-100 small fw-bold mt-3 opacity-50 hover-opacity-100"
+    >
+      CLEAR ALL FILTERS
+    </button>
+  </>
+);
+
 export default function SalonSearch() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
@@ -34,6 +137,7 @@ export default function SalonSearch() {
   const [maxPrice, setMaxPrice] = useState<number | ''>('');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     const fetchSalons = async () => {
@@ -85,139 +189,81 @@ export default function SalonSearch() {
   return (
     <div className="bg-white min-vh-100 pb-5">
       {/* ELITE HERO HEADER - FLAGSHIP CREAM DESIGN */}
-      <section className="position-relative overflow-hidden pt-5 pb-5 mb-5" style={{ background: '#FDF9F0', minHeight: '320px', display: 'flex', alignItems: 'center' }}>
+      <section className="position-relative overflow-hidden section-py mb-4" style={{ background: '#FDF9F0', minHeight: 'auto' }}>
         <div className="position-absolute w-100 h-100 opacity-20" style={{ backgroundImage: `linear-gradient(#E5D5C5 1px, transparent 1px), linear-gradient(90deg, #E5D5C5 1px, transparent 1px)`, backgroundSize: '40px 40px', zIndex: 0 }}></div>
         
-        <div className="container position-relative px-4 px-lg-5" style={{ zIndex: 1 }}>
+        <div className="container position-relative px-4" style={{ zIndex: 1 }}>
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-4">
             <FadeIn>
               <div className="d-inline-flex align-items-center gap-2 mb-2 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
                 <FiMapPin size={12} />
                 <span className="text-uppercase fw-bold small letter-spaced" style={{ fontSize: '0.6rem' }}>Premium Collection</span>
               </div>
-              <h1 className="display-3 fw-bold mb-1" style={{ color: '#5D2E17', letterSpacing: '-1.5px' }}>
-                Elite <span className="font-serif-italic" style={{ color: '#B45309' }}>Salons</span>
+              <h1 className="fluid-display-1 fw-bold mb-1" style={{ color: '#1A1A1A' }}>
+                Elite <span className="text-rust font-serif-italic">Salons</span>
               </h1>
               <p className="text-muted mb-0 lead opacity-75">{filteredSalons.length} curated spaces for your unique style</p>
             </FadeIn>
 
-            <FadeIn delay={0.2}>
-              <div className="bg-white rounded-pill shadow-xl d-inline-flex p-1 border border-light">
-                <button 
-                  onClick={() => setViewMode('list')}
-                  className={`btn btn-sm rounded-pill fw-bold border-0 px-4 py-2 d-flex align-items-center transition-all ${viewMode === 'list' ? 'bg-dark text-white shadow-lg' : 'text-muted'}`}
-                >
-                  <FiGrid className="me-2"/> LIST VIEW
-                </button>
-                <button 
-                  onClick={() => setViewMode('map')}
-                  className={`btn btn-sm rounded-pill fw-bold border-0 px-4 py-2 d-flex align-items-center transition-all ${viewMode === 'map' ? 'bg-dark text-white shadow-lg' : 'text-muted'}`}
-                >
-                  <FiMap className="me-2"/> MAP VIEW
-                </button>
-              </div>
-            </FadeIn>
+            <div className="d-flex align-items-center gap-3">
+              <FadeIn delay={0.2}>
+                <div className="bg-white rounded-pill shadow-xl d-inline-flex p-1 border border-light">
+                  <button 
+                    onClick={() => setViewMode('list')}
+                    className={`btn btn-sm rounded-pill fw-bold border-0 px-4 py-2 d-flex align-items-center transition-all ${viewMode === 'list' ? 'bg-dark text-white shadow-lg' : 'text-muted'}`}
+                    style={{ fontSize: '0.7rem' }}
+                  >
+                    <FiGrid className="me-2"/> LIST
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('map')}
+                    className={`btn btn-sm rounded-pill fw-bold border-0 px-4 py-2 d-flex align-items-center transition-all ${viewMode === 'map' ? 'bg-dark text-white shadow-lg' : 'text-muted'}`}
+                    style={{ fontSize: '0.7rem' }}
+                  >
+                    <FiMap className="me-2"/> MAP
+                  </button>
+                </div>
+              </FadeIn>
+              
+              {/* Mobile Filter Trigger */}
+              <button className="btn btn-outline-dark d-lg-none rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2" onClick={() => setShowMobileFilters(true)}>
+                <FiSliders /> FILTER
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
       <div className="container-fluid px-4 px-lg-5">
         <div className="row g-5">
-          {/* PREMIUM MINIMALIST SIDEBAR */}
+          {/* PREMIUM MINIMALIST SIDEBAR & MOBILE FILTERS */}
+          <AnimatePresence>
+            {showMobileFilters && (
+              <div className="fixed-top w-100 h-100 bg-white z-index-modal p-4 overflow-auto animate-fade-in d-lg-none">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h4 className="fw-bold mb-0">Filters</h4>
+                  <button className="btn btn-rust rounded-pill px-4 py-2 fw-bold" onClick={() => setShowMobileFilters(false)}>DONE</button>
+                </div>
+                <FilterContent 
+                  searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                  minPrice={minPrice} setMinPrice={setMinPrice}
+                  maxPrice={maxPrice} setMaxPrice={setMaxPrice}
+                  minRating={minRating} setMinRating={setMinRating}
+                  selectedServices={selectedServices} setSelectedServices={setSelectedServices}
+                />
+              </div>
+            )}
+          </AnimatePresence>
+
           <aside className="col-lg-3 d-none d-lg-block">
             <div className="sticky-top" style={{ top: '100px' }}>
-              <div className="d-flex align-items-center gap-2 mb-4">
-                <FiSliders className="text-rust" />
-                <h5 className="fw-bold mb-0 font-serif-italic">Refine Search</h5>
-              </div>
-
-              <div className="mb-4">
-                <label className="fw-bold small text-muted mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.65rem' }}>Location & Name</label>
-                <div className="glass-input-wrapper position-relative">
-                   <FiSearch className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted opacity-50" size={18} />
-                   <input 
-                      type="text" 
-                      placeholder="Search salons..." 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="form-control rounded-pill ps-5 py-3 border-light shadow-sm fw-medium"
-                      style={{ fontSize: '0.9rem' }}
-                   />
-                </div>
-              </div>
-
-              <div className="mb-4 pt-4 border-top border-light">
-                <label className="fw-bold small text-muted mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.65rem' }}>Price Range</label>
-                <div className="d-flex align-items-center gap-2">
-                   <input 
-                      type="number" 
-                      placeholder="Min" 
-                      value={minPrice}
-                      onChange={(e) => setMinPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="form-control rounded-pill border-light shadow-sm text-center py-2 fw-bold"
-                      style={{ fontSize: '0.8rem' }}
-                   />
-                   <span className="text-muted opacity-30">—</span>
-                   <input 
-                      type="number" 
-                      placeholder="Max" 
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="form-control rounded-pill border-light shadow-sm text-center py-2 fw-bold"
-                      style={{ fontSize: '0.8rem' }}
-                   />
-                </div>
-              </div>
-
-              <div className="mb-4 pt-4 border-top border-light">
-                <label className="fw-bold small text-muted mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.65rem' }}>Minimum Excellence</label>
-                <div className="d-flex flex-column gap-3">
-                  {[4.5, 4.0, 0].map((rating) => (
-                    <label key={rating} className="d-flex align-items-center cursor-pointer group">
-                      <div className="position-relative d-flex align-items-center justify-content-center" style={{ width: '20px', height: '20px' }}>
-                        <input 
-                          type="radio" 
-                          name="rating" 
-                          className="form-check-input mt-0 border-rust shadow-none" 
-                          onChange={() => setMinRating(rating)}
-                          checked={minRating === rating} 
-                        />
-                      </div>
-                      <span className={`ms-3 small fw-bold ${minRating === rating ? 'text-rust' : 'text-muted opacity-75'}`}>
-                        {rating === 0 ? 'All Ratings' : `${rating}+ Stars`}
-                      </span>
-                      {rating > 0 && <FiStar className={`ms-2 ${minRating === rating ? 'text-warning fill-warning' : 'text-muted opacity-30'}`} size={12} />}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-4 pt-4 border-top border-light">
-                <label className="fw-bold small text-muted mb-3 text-uppercase letter-spaced" style={{ fontSize: '0.65rem' }}>Bespoke Services</label>
-                <div className="d-flex flex-wrap gap-2">
-                  {['Haircut', 'Coloring', 'Manicure', 'Facial', 'Massage', 'Braids'].map((service) => (
-                    <button 
-                      key={service} 
-                      onClick={() => {
-                        setSelectedServices(prev => prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]);
-                      }}
-                      className={`btn btn-sm rounded-pill px-3 py-2 fw-bold transition-all ${
-                        selectedServices.includes(service) ? 'bg-rust text-white shadow-lg' : 'bg-light text-muted border-0'
-                      }`}
-                      style={{ fontSize: '0.7rem' }}
-                    >
-                      {service.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button 
-                onClick={() => { setSearchQuery(''); setMinRating(0); setMinPrice(''); setMaxPrice(''); setSelectedServices([]); }}
-                className="btn btn-link text-muted text-decoration-none w-100 small fw-bold mt-3 opacity-50 hover-opacity-100"
-              >
-                CLEAR ALL FILTERS
-              </button>
+              <FilterContent 
+                searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                minPrice={minPrice} setMinPrice={setMinPrice}
+                maxPrice={maxPrice} setMaxPrice={setMaxPrice}
+                minRating={minRating} setMinRating={setMinRating}
+                selectedServices={selectedServices} setSelectedServices={setSelectedServices}
+              />
             </div>
           </aside>
 

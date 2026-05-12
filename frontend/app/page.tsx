@@ -30,8 +30,8 @@ const SectionCarousel = ({ children, title, subtitle, badgeIcon, badgeText, view
   };
 
   return (
-    <section className="container mt-5 pt-5">
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 gap-4">
+    <section className="section-py container">
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4 mb-md-5 gap-3 gap-md-4">
         <div>
           {badgeText && (
             <div className="d-inline-flex align-items-center gap-2 mb-3 bg-rust text-white px-3 py-1 rounded-pill shadow-sm">
@@ -42,17 +42,17 @@ const SectionCarousel = ({ children, title, subtitle, badgeIcon, badgeText, view
           <h2 className="display-5 fw-bold font-serif-italic mb-2">{title}</h2>
           {subtitle && <p className="text-muted mb-0 lead opacity-75" style={{ maxWidth: '600px', fontSize: '1rem' }}>{subtitle}</p>}
         </div>
-        <div className="d-flex align-items-center gap-3">
+        <div className="d-flex align-items-center justify-content-between justify-content-md-end gap-3 w-100 w-md-auto">
           <div className="d-flex gap-2">
-            <button onClick={() => scroll('left')} className="btn btn-outline-rust rounded-circle p-0 d-flex align-items-center justify-content-center transition-all hover-scale" style={{ width: '48px', height: '48px' }}>
-              <FiChevronRight size={24} style={{ transform: 'rotate(180deg)' }} />
+            <button onClick={() => scroll('left')} className="btn btn-outline-rust rounded-circle p-0 d-flex align-items-center justify-content-center transition-all hover-scale" style={{ width: '44px', height: '44px' }}>
+              <FiChevronRight size={20} style={{ transform: 'rotate(180deg)' }} />
             </button>
-            <button onClick={() => scroll('right')} className="btn btn-rust rounded-circle p-0 d-flex align-items-center justify-content-center transition-all hover-scale shadow-sm" style={{ width: '48px', height: '48px' }}>
-              <FiChevronRight size={24} />
+            <button onClick={() => scroll('right')} className="btn btn-rust rounded-circle p-0 d-flex align-items-center justify-content-center transition-all hover-scale shadow-sm" style={{ width: '44px', height: '44px' }}>
+              <FiChevronRight size={20} />
             </button>
           </div>
           {viewAllLink && (
-            <Link href={viewAllLink} className="btn btn-dark rounded-pill px-4 py-2 fw-bold small letter-spaced d-flex align-items-center gap-2 transition-all hover-scale shadow-sm ms-2">
+            <Link href={viewAllLink} className="btn btn-dark rounded-pill px-4 py-2 fw-bold small letter-spaced d-flex align-items-center gap-2 transition-all hover-scale shadow-sm">
                {viewAllText} <FiArrowRight size={16} />
             </Link>
           )}
@@ -62,7 +62,7 @@ const SectionCarousel = ({ children, title, subtitle, badgeIcon, badgeText, view
       <div className="position-relative">
         <div 
           ref={scrollRef}
-          className="d-flex gap-4 overflow-auto scrollbar-none pb-4 px-2"
+          className="d-flex gap-3 gap-md-4 overflow-auto scrollbar-none pb-4 px-2"
           style={{ scrollSnapType: 'x mandatory', scrollBehavior: 'smooth' }}
         >
           {children}
@@ -164,34 +164,33 @@ export default function Home() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <h1 className="fw-bold mb-0" style={{ fontSize: 'var(--fs-display)', lineHeight: '1.1', letterSpacing: '-2px', color: '#5D2E17' }}>
-                  <span style={{ whiteSpace: 'nowrap' }}>Book. Arrive.</span> <br />
-                  <span className="font-serif-italic position-relative ms-0 ms-lg-0 d-inline-block" style={{ fontSize: '1.1em', fontStyle: 'italic', color: '#B45309' }}>
-                    Glow.
-                    <motion.span 
-                      animate={{ opacity: [1, 0] }}
-                      transition={{ duration: 0.8, repeat: Infinity }}
-                      className="position-absolute ms-1 d-none d-md-block" 
-                      style={{ width: '5px', height: '80%', background: '#B45309', top: '15%', right: '-20px' }}
-                    ></motion.span>
-                  </span>
+                <h1 className="fw-bold mb-3" style={{ fontSize: 'var(--fs-display)', lineHeight: '1.05', letterSpacing: '-2px', color: '#1A1A1A' }}>
+                  Refine Your <br />
+                  <span className="text-rust font-serif-italic" style={{ fontStyle: 'italic' }}>Aura.</span>
                 </h1>
-                <p className="mt-4 mb-5 mx-auto mx-lg-0" style={{ fontSize: 'var(--fs-base)', lineHeight: '1.6', maxWidth: '480px', fontWeight: 400, color: '#7C4B30', opacity: 0.8 }}>
-                  Discover and book the most prestigious beauty artisans in your city. Experience tactile luxury with every appointment.
+                <p className="mt-4 mb-5 mx-auto mx-lg-0 lead opacity-75" style={{ lineHeight: '1.6', maxWidth: '480px' }}>
+                  Experience the world's most premium salon curated network. Every touchpoint designed for your sophisticated lifestyle.
                 </p>
 
-                {/* Flagship CTA - Replaces Search Inputs */}
-                <Link href="/salons" className="text-decoration-none">
-                  <div className="search-pill-luxury d-flex align-items-center shadow-sm bg-white p-2 rounded-pill border border-light transition-all hover-card-premium cursor-pointer" style={{ maxWidth: '400px' }}>
-                    <div className="flex-grow-1 px-4 py-2 text-start">
-                      <span className="d-block text-uppercase mb-0 opacity-50 fw-bold" style={{ fontSize: '0.65rem', letterSpacing: '1px', color: '#5D2E17' }}>Explore Now</span>
-                      <span className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>Browse All Salons</span>
-                    </div>
-                    <div className="btn rounded-circle d-flex align-items-center justify-content-center transition-all hover-scale shadow-sm ms-2" style={{ width: '48px', height: '48px', background: '#F4E7D3', color: '#B45309', flexShrink: 0 }}>
-                      <FiSearch size={20} />
+                {/* Search Bar / CTA - Responsive Stacking */}
+                <div className="search-pill-luxury d-flex flex-column flex-md-row align-items-stretch align-items-md-center shadow-xl bg-white p-2 rounded-4 rounded-md-pill border border-light transition-all cursor-pointer mx-auto mx-lg-0" style={{ maxWidth: '550px' }}>
+                  <div className="flex-grow-1 px-4 py-3 py-md-2 text-start d-flex align-items-center gap-3">
+                    <FiSearch className="text-rust" size={20} />
+                    <div className="flex-grow-1">
+                      <span className="d-block text-uppercase mb-0 opacity-50 fw-bold" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>What service?</span>
+                      <input type="text" placeholder="Hair, Nails, Spa..." className="border-0 bg-transparent w-100 fw-bold outline-none" style={{ fontSize: '0.9rem' }} />
                     </div>
                   </div>
-                </Link>
+                  <div className="d-none d-md-block" style={{ width: '1px', height: '30px', background: 'rgba(0,0,0,0.05)' }}></div>
+                  <div className="flex-grow-1 px-4 py-3 py-md-2 text-start d-flex align-items-center gap-3">
+                    <FiMapPin className="text-rust" size={20} />
+                    <div className="flex-grow-1">
+                      <span className="d-block text-uppercase mb-0 opacity-50 fw-bold" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>Where?</span>
+                      <input type="text" placeholder="Monrovia, LIB" className="border-0 bg-transparent w-100 fw-bold outline-none" style={{ fontSize: '0.9rem' }} />
+                    </div>
+                  </div>
+                  <button onClick={handleSearch} className="btn btn-rust rounded-pill px-5 py-3 py-md-2 fw-bold shadow-sm transition-all hover-scale ms-md-2">EXPLORE</button>
+                </div>
               </motion.div>
             </div>
 
@@ -343,7 +342,7 @@ export default function Home() {
                                 catName?.includes('tattoo') ? <FiZap size={20} /> : <FiTag size={20} />;
             
             return (
-              <div className="flex-shrink-0" key={idx} style={{ width: '180px', scrollSnapAlign: 'start' }}>
+              <div className="flex-shrink-0" key={idx} style={{ width: 'clamp(140px, 40vw, 180px)', scrollSnapAlign: 'start' }}>
                 <Link href={`/salons?category=${catName}`} className="text-decoration-none">
                   <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up border border-light" style={{ height: '160px', background: '#FDF9F0' }}>
                     <div className="w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-center">
@@ -362,7 +361,7 @@ export default function Home() {
           })
         ) : (
           [1, 2, 3, 4, 5, 6].map((i) => (
-            <div className="flex-shrink-0 text-center opacity-50" key={i} style={{ width: '180px' }}>
+            <div className="flex-shrink-0 text-center opacity-50" key={i} style={{ width: '160px' }}>
               <div className="service-icon-circle mx-auto mb-3 bg-light"></div>
               <div className="bg-light h-2 w-75 mx-auto rounded"></div>
             </div>
@@ -381,7 +380,7 @@ export default function Home() {
             viewAllLink="/salons?type=INDEPENDENT"
           >
             {independentPros.map((pro) => (
-              <div className="flex-shrink-0" key={pro.id} style={{ width: '380px', scrollSnapAlign: 'start' }}>
+              <div className="flex-shrink-0" key={pro.id} style={{ width: 'clamp(280px, 80vw, 380px)', scrollSnapAlign: 'start' }}>
                 <Link href={`/salons/${pro.id}`} className="text-decoration-none">
                   <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up" style={{ height: '400px' }}>
                     <img 
@@ -421,7 +420,7 @@ export default function Home() {
           viewAllText="EXPLORE ALL LOOKS"
         >
           {lookbookItems.map((look) => (
-            <div className="flex-shrink-0" key={look.id} style={{ width: '380px', scrollSnapAlign: 'start' }}>
+            <div className="flex-shrink-0" key={look.id} style={{ width: 'clamp(280px, 85vw, 380px)', scrollSnapAlign: 'start' }}>
               <div 
                 onClick={() => router.push('/lookbook')}
                 className="position-relative overflow-hidden rounded-5 cursor-pointer group shadow-sm transition-all hover-translate-up"
@@ -457,7 +456,7 @@ export default function Home() {
         viewAllText="SEE MENU"
       >
         {featuredServices.map((srv) => (
-          <div className="flex-shrink-0" key={srv.id} style={{ width: '320px', scrollSnapAlign: 'start' }}>
+          <div className="flex-shrink-0" key={srv.id} style={{ width: 'clamp(260px, 75vw, 320px)', scrollSnapAlign: 'start' }}>
             <Link href={`/salons/${srv.salon}`} className="text-decoration-none">
               <div className="position-relative bg-white rounded-5 shadow-sm border border-opacity-10 overflow-hidden h-100 transition-all hover-translate-up hover-shadow-xl group">
                 <div className="position-relative overflow-hidden" style={{ height: '240px' }}>
@@ -511,7 +510,7 @@ export default function Home() {
               const salonImage = getImageUrl(salon.images?.[0]?.image || salon.cover_image);
               
               return (
-                <div className="flex-shrink-0" key={salon.id} style={{ width: '400px', scrollSnapAlign: 'start' }}>
+                <div className="flex-shrink-0" key={salon.id} style={{ width: 'clamp(300px, 90vw, 400px)', scrollSnapAlign: 'start' }}>
                   <Link href={`/salons/${salon.id}`} className="text-decoration-none">
                     <div className="position-relative overflow-hidden rounded-5 group shadow-sm transition-all hover-translate-up" style={{ height: '320px' }}>
                       <img 
@@ -895,19 +894,12 @@ export default function Home() {
 
 
       {/* MOBILE READY / PWA BENTO SECTION */}
-      <section id="mobile-ready" className="py-5" style={{ background: '#F5F0E1' }}>
-        <div className="container py-5">
-          <div className="bento-grid-container" style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(12, 1fr)', 
-            gridAutoRows: 'minmax(200px, auto)',
-            gap: '24px'
-          }}>
+      <section id="mobile-ready" className="section-py" style={{ background: '#F5F0E1' }}>
+        <div className="container">
+          <div className="bento-grid">
             
             {/* Main Header Card (Wide) */}
-            <div className="bento-card p-5" style={{ 
-              gridColumn: 'span 8', 
-              gridRow: 'span 2',
+            <div className="bento-card span-8 row-span-2 adaptive-p" style={{ 
               background: '#121212',
               borderRadius: '40px',
               color: 'white',
@@ -921,15 +913,13 @@ export default function Home() {
                   Download our web app to your home screen for instant access to bookings, salon locations, and your style favorites. No App Store required.
                 </p>
               </div>
-              <div className="position-absolute bottom-0 end-0 p-5 opacity-5">
+              <div className="position-absolute bottom-0 end-0 p-5 opacity-5 d-none d-md-block">
                 <FiDownload size={250} />
               </div>
             </div>
 
             {/* Installation & CTA Card (Tall Right) */}
-            <div className="bento-card p-4 text-center" style={{ 
-              gridColumn: 'span 4', 
-              gridRow: 'span 4',
+            <div className="bento-card span-4 row-span-4 adaptive-p text-center" style={{ 
               background: '#1A1A1A',
               borderRadius: '40px',
               color: 'white',
@@ -967,9 +957,7 @@ export default function Home() {
             </div>
 
             {/* Install Steps Card */}
-            <div className="bento-card p-5" style={{ 
-              gridColumn: 'span 4', 
-              gridRow: 'span 2',
+            <div className="bento-card span-4 row-span-2 adaptive-p" style={{ 
               background: '#1A1A1A',
               borderRadius: '40px',
               color: 'white',
@@ -993,9 +981,7 @@ export default function Home() {
             </div>
 
             {/* Elevate Experience Card */}
-            <div className="bento-card p-5" style={{ 
-              gridColumn: 'span 4', 
-              gridRow: 'span 2',
+            <div className="bento-card span-4 row-span-2 adaptive-p" style={{ 
               background: '#121212',
               borderRadius: '40px',
               color: 'white',
