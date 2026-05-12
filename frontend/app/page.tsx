@@ -164,9 +164,17 @@ export default function Home() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <h1 className="fw-bold mb-3" style={{ fontSize: 'var(--fs-display)', lineHeight: '1.05', letterSpacing: '-2px', color: '#1A1A1A' }}>
-                  Refine Your <br />
-                  <span className="text-rust font-serif-italic" style={{ fontStyle: 'italic' }}>Aura.</span>
+                <h1 className="fw-bold mb-0" style={{ fontSize: 'var(--fs-display)', lineHeight: '1.1', letterSpacing: '-2px', color: '#5D2E17' }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>Book. Arrive.</span> <br />
+                  <span className="font-serif-italic position-relative ms-0 ms-lg-0 d-inline-block" style={{ fontSize: '1.1em', fontStyle: 'italic', color: '#B45309' }}>
+                    Glow.
+                    <motion.span 
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ duration: 0.8, repeat: Infinity }}
+                      className="position-absolute ms-1 d-none d-md-block" 
+                      style={{ width: '5px', height: '80%', background: '#B45309', top: '15%', right: '-20px' }}
+                    ></motion.span>
+                  </span>
                 </h1>
                 <p className="mt-4 mb-5 mx-auto mx-lg-0 lead opacity-75" style={{ lineHeight: '1.6', maxWidth: '480px' }}>
                   Experience the world's most premium salon curated network. Every touchpoint designed for your sophisticated lifestyle.
