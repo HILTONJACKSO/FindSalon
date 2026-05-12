@@ -6,19 +6,29 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, GoogleAuthProvider, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
+import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { api } from '@/lib/api';
+import { api, getImageUrl } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
-import { FiMail, FiLock, FiStar, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiMail, FiLock, FiStar, FiEye, FiEyeOff, FiArrowRight, FiShield } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
-import { FaApple } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Valid email is required' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
 });
 type LoginFormValues = z.infer<typeof loginSchema>;
+
+const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }} 
+    animate={{ opacity: 1, y: 0 }} 
+    transition={{ duration: 0.8, delay }}
+  >
+    {children}
+  </motion.div>
+);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,7 +41,6 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Load saved credentials
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedEmail = localStorage.getItem('remember_email');
@@ -44,8 +53,6 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setError('');
-
-      // Save credentials if Keep Signed In is checked
       if (keepSigned) {
         localStorage.setItem('remember_email', data.email);
         localStorage.setItem('remember_password', data.password);
@@ -53,229 +60,205 @@ export default function LoginPage() {
         localStorage.removeItem('remember_email');
         localStorage.removeItem('remember_password');
       }
+      
       let token: string;
       let userProfile: any;
 
       try {
-        // 0. Set Persistence based on keepSigned
         await setPersistence(auth, keepSigned ? browserLocalPersistence : browserSessionPersistence);
-        
-        // 1. Try Firebase first (Standard User/Owner)
         const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
         token = await userCredential.user.getIdToken();
-        
-        const profileRes = await api.get('auth/profile/', { 
-          headers: { Authorization: `Bearer ${token}` } 
-        });
+        const profileRes = await api.get('auth/profile/', { headers: { Authorization: `Bearer ${token}` } });
         userProfile = profileRes.data;
-      } catch (fbErr: any) {
-        console.log("Firebase login failed, trying traditional fallback...", fbErr.code);
-        
-        // 2. Try Traditional Backend Login (For Admin accounts created manually)
-        const loginRes = await api.post('auth/login/', {
-          email: data.email,
-          password: data.password
-        });
-        
+      } catch (fbErr) {
+        const loginRes = await api.post('auth/login/', { email: data.email, password: data.password });
         token = loginRes.data.access;
-        // Fetch profile with the new JWT
-        const profileRes = await api.get('auth/profile/', { 
-          headers: { Authorization: `Bearer ${token}` } 
-        });
+        const profileRes = await api.get('auth/profile/', { headers: { Authorization: `Bearer ${token}` } });
         userProfile = profileRes.data;
       }
 
       setAuth(userProfile, token);
-      
-      // STRICT ROLE-BASED REDIRECTION SECURITY
       const role = userProfile.role;
-      
-      if (role === 'ADMIN') {
-          console.log("Super Admin Access Granted. Routing to Command Center...");
-          router.push('/admin/dashboard');
-      } else if (role === 'OWNER') {
-          console.log("Salon Owner Access Granted. Routing to Owner Dashboard...");
-          router.push('/owner/dashboard');
-      } else {
-          router.push('/profile');
-      }
-    } catch (err: any) {
-
-      console.error("Login final error:", err);
-      setError('Invalid email or password. Please try again.');
+      if (role === 'ADMIN') router.push('/admin/dashboard');
+      else if (role === 'OWNER') router.push('/owner/dashboard');
+      else router.push('/profile');
+    } catch (err) {
+      setError('The credentials provided do not match our private records.');
     }
   };
 
   const handleGoogleSignIn = async () => {
     try {
-      setError('');
-      // Set persistence based on keepSigned
       await setPersistence(auth, keepSigned ? browserLocalPersistence : browserSessionPersistence);
-      
       const provider = new GoogleAuthProvider();
-      // Use Redirect instead of Popup for better stability in unstable networks
       await signInWithRedirect(auth, provider);
-    } catch (err: any) {
-      console.error("Google sign in error:", err);
-      if (err.code === 'auth/popup-blocked') {
-        setError('Popup blocked by browser. Please allow popups for this site.');
-      } else {
-        setError('Google sign in failed. Please try again.');
-      }
+    } catch (err) {
+      setError('Google authentication failed. Please try another method.');
     }
   };
 
-  // Handle redirect result if needed (though AuthProvider usually catches it)
-  useEffect(() => {
-    const checkRedirect = async () => {
-      try {
-        const { getRedirectResult } = await import('firebase/auth');
-        const result = await getRedirectResult(auth);
-        if (result) {
-          const token = await result.user.getIdToken();
-          const profileRes = await api.get('auth/profile/', { 
-            headers: { Authorization: `Bearer ${token}` } 
-          });
-          setAuth(profileRes.data, token);
-          router.push('/profile');
-        }
-      } catch (err) {
-        console.error("Redirect result error:", err);
-      }
-    };
-    checkRedirect();
-  }, [router, setAuth]);
-
   return (
-    <div className="container-fluid p-0 min-vh-100 d-flex bg-sand" style={{ backgroundColor: 'var(--bg-sand)' }}>
-      <div className="row g-0 w-100">
+    <div className="container-fluid p-0 min-vh-100 d-flex bg-white overflow-hidden">
+      <div className="row g-0 w-100 flex-grow-1">
         
-        {/* LEFT SIDE: Image + Overlay */}
-        <div className="col-lg-5 d-none d-lg-flex position-relative flex-column justify-content-end p-5" style={{
-          backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url("https://images.unsplash.com/photo-1521590832167-7bfc17484d20?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}>
-          <div className="position-relative" style={{ zIndex: 10, maxWidth: '400px' }}>
-            <h1 className="text-white fw-bold display-4 mb-0 font-serif-italic" style={{ letterSpacing: '-1.5px', lineHeight: '1.2' }}>Refine</h1>
-            <h1 className="text-rust fw-bold display-4 mb-4 font-serif-italic" style={{ letterSpacing: '-1.5px', lineHeight: '1.2' }}>Your Aura.</h1>
-            <p className="text-white-50 fs-5 mb-5 lh-base font-serif-italic opacity-75">
-              Experience the world's most premium salon curated network. Every touchpoint, every service, designed for your sophisticated lifestyle.
-            </p>
-            <div className="d-flex align-items-center">
-              <div className="bg-white bg-opacity-25 rounded-pill px-3 py-1 d-flex align-items-center gap-2 border border-white border-opacity-25">
-                 <div className="rounded-circle bg-success" style={{ width: '8px', height: '8px' }}></div>
-                 <span className="text-white small fw-bold" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>EXCLUSIVE MEMBER ACCESS</span>
+        {/* EDITORIAL HERO SIDE */}
+        <div className="col-lg-6 d-none d-lg-flex position-relative flex-column justify-content-center p-5 overflow-hidden" style={{ background: '#0A0A0A' }}>
+          <motion.div 
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.7 }}
+            transition={{ duration: 2, ease: "easeOut" }}
+            className="position-absolute w-100 h-100 top-0 start-0"
+            style={{
+              backgroundImage: `url(${getImageUrl('hero/login_bg.jpg')})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              zIndex: 0
+            }}
+          />
+          <div className="position-absolute w-100 h-100 top-0 start-0" style={{ background: 'linear-gradient(to right, rgba(10,10,10,0.9) 0%, transparent 100%)', zIndex: 1 }}></div>
+          
+          <div className="position-relative ps-5" style={{ zIndex: 10, maxWidth: '500px' }}>
+            <FadeIn>
+              <div className="d-flex align-items-center gap-2 mb-4">
+                 <div className="bg-rust p-1 rounded-circle"></div>
+                 <span className="text-white small fw-bold letter-spaced" style={{ fontSize: '0.65rem' }}>EXCLUSIVE MEMBER ACCESS</span>
               </div>
-            </div>
+              <h1 className="text-white display-2 fw-bold mb-0" style={{ letterSpacing: '-2px', lineHeight: '1' }}>Refine</h1>
+              <h1 className="text-rust display-2 fw-bold mb-4 font-serif-italic" style={{ letterSpacing: '-2px', lineHeight: '1' }}>Your Aura.</h1>
+              <p className="text-white text-opacity-70 fs-5 mb-5 lh-base" style={{ fontWeight: '300' }}>
+                Experience the world's most premium salon curated network. Every touchpoint, every service, designed for your sophisticated lifestyle.
+              </p>
+              
+              <div className="d-flex gap-4">
+                 <div className="text-white text-opacity-40 small d-flex align-items-center gap-2">
+                    <FiShield className="text-rust" /> SECURE ACCESS
+                 </div>
+                 <div className="text-white text-opacity-40 small d-flex align-items-center gap-2">
+                    <FiStar className="text-rust" /> CURATED NETWORK
+                 </div>
+              </div>
+            </FadeIn>
           </div>
         </div>
 
-        {/* RIGHT SIDE: Form */}
-        <div className="col-lg-7 d-flex flex-column justify-content-start align-items-center p-4 p-md-5 pt-lg-5 position-relative overflow-auto" style={{ maxHeight: '100vh' }}>
-          <div className="w-100 py-5" style={{ maxWidth: '450px' }}>
+        {/* PREMIUM FORM SIDE */}
+        <div className="col-lg-6 d-flex flex-column justify-content-center align-items-center p-4 p-md-5 bg-white position-relative">
+          <div className="w-100" style={{ maxWidth: '420px' }}>
             
-            {/* Logo area */}
-            <div className="mb-5 d-flex align-items-center">
-               <img src="/logo.jpg" alt="FindSalon" className="rounded-circle shadow-lg" style={{ width: '60px', height: '60px', objectFit: 'cover' }} />
-            </div>
-
-            <h2 className="fw-bold mb-2 font-serif-italic" style={{ fontSize: '2.5rem', letterSpacing: '-1.5px' }}>Welcome Back</h2>
-            <p className="text-muted small mb-5 lead">Sign in to your private sanctuary.</p>
-
-            {/* OAuth Buttons */}
-            <div className="mb-4">
-              <button 
-                type="button" 
-                onClick={handleGoogleSignIn}
-                className="btn btn-white border w-100 rounded-pill py-3 d-flex align-items-center justify-content-center fw-medium bg-white shadow-sm"
-              >
-                <FcGoogle className="me-2" size={20} /> <span className="text-dark">Sign In with Google</span>
-              </button>
-            </div>
-
-            <div className="d-flex align-items-center mb-4">
-              <hr className="flex-grow-1 opacity-25" />
-              <span className="mx-3 text-muted" style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '1px' }}>OR LOGIN WITH EMAIL</span>
-              <hr className="flex-grow-1 opacity-25" />
-            </div>
-
-            {error && <div className="alert alert-danger p-2 small border-0 rounded-3 bg-danger bg-opacity-10 text-danger">{error}</div>}
-
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="mb-3">
-                <label className="form-label fw-bold small text-dark">Email Address</label>
-                <div className="position-relative">
-                  <FiMail className="position-absolute text-muted" style={{ left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input 
-                    type="email" 
-                    placeholder="name@example.com"
-                    className={`form-control rounded-pill py-2 ps-5 border-0 shadow-sm ${errors.email ? 'is-invalid' : ''}`}
-                    style={{ backgroundColor: 'white' }}
-                    {...register('email')}
-                  />
-                  {errors.email && <div className="invalid-feedback ps-4">{errors.email.message}</div>}
-                </div>
+            <FadeIn delay={0.2}>
+              <div className="text-center mb-5">
+                <img src="/logo.jpg" alt="FindSalon" className="rounded-circle shadow-xl mb-4" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '3px solid #FDF9F0' }} />
+                <h2 className="fw-bold text-dark display-6 mb-2 font-serif-italic">Welcome Back</h2>
+                <p className="text-muted small">Sign in to your private sanctuary.</p>
               </div>
+
+              {error && (
+                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="alert alert-danger py-2 px-3 small border-0 rounded-4 bg-danger bg-opacity-5 text-danger mb-4 text-center fw-medium">
+                  {error}
+                </motion.div>
+              )}
 
               <div className="mb-4">
-                <div className="d-flex justify-content-between align-items-center">
-                  <label className="form-label fw-bold small text-dark mb-1">Password</label>
-                  <Link href="/forgot" className="text-rust text-decoration-none small fw-medium" style={{ fontSize: '0.8rem' }}>Forgot Password?</Link>
-                </div>
-                <div className="position-relative">
-                  <FiLock className="position-absolute text-muted" style={{ left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="••••••••"
-                    className={`form-control rounded-pill py-2 ps-5 pe-5 border-0 shadow-sm ${errors.password ? 'is-invalid' : ''}`}
-                    style={{ backgroundColor: 'white' }}
-                    {...register('password')}
-                  />
-                  <div 
-                    className="position-absolute translate-middle-y text-muted cursor-pointer hover-rust" 
-                    style={{ top: '50%', right: '15px' }}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                <button 
+                  type="button" 
+                  onClick={handleGoogleSignIn}
+                  className="btn btn-white border border-light shadow-sm w-100 rounded-pill py-3 d-flex align-items-center justify-content-center fw-bold transition-all hover-translate-up"
+                  style={{ background: '#fff', fontSize: '0.9rem' }}
+                >
+                  <FcGoogle className="me-3" size={22} /> CONTINUE WITH GOOGLE
+                </button>
+              </div>
+
+              <div className="d-flex align-items-center mb-4">
+                <hr className="flex-grow-1 opacity-10" />
+                <span className="mx-3 text-muted text-uppercase fw-bold" style={{ fontSize: '0.6rem', letterSpacing: '2px' }}>OR LOGIN WITH EMAIL</span>
+                <hr className="flex-grow-1 opacity-10" />
+              </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="d-flex flex-column gap-3">
+                <div className="group">
+                  <label className="fw-bold small text-dark mb-2 ms-2">Email Address</label>
+                  <div className="position-relative">
+                    <FiMail className="position-absolute text-muted opacity-50" style={{ left: '18px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input 
+                      type="email" 
+                      placeholder="mama@gmail.com"
+                      className={`form-control rounded-pill py-3 ps-5 border-light bg-light bg-opacity-30 shadow-none transition-all ${errors.email ? 'border-danger' : 'focus-border-rust'}`}
+                      style={{ fontSize: '0.95rem' }}
+                      {...register('email')}
+                    />
                   </div>
-                  {errors.password && <div className="invalid-feedback ps-4">{errors.password.message}</div>}
+                  {errors.email && <p className="text-danger small mt-1 ms-3 fw-medium">{errors.email.message}</p>}
                 </div>
+
+                <div className="group">
+                  <div className="d-flex justify-content-between align-items-center mb-2 ms-2">
+                    <label className="fw-bold small text-dark mb-0">Password</label>
+                    <Link href="/forgot" className="text-rust text-decoration-none small fw-bold hover-underline" style={{ fontSize: '0.75rem' }}>FORGOT PASSWORD?</Link>
+                  </div>
+                  <div className="position-relative">
+                    <FiLock className="position-absolute text-muted opacity-50" style={{ left: '18px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="••••••••"
+                      className={`form-control rounded-pill py-3 ps-5 pe-5 border-light bg-light bg-opacity-30 shadow-none transition-all ${errors.password ? 'border-danger' : 'focus-border-rust'}`}
+                      style={{ fontSize: '0.95rem' }}
+                      {...register('password')}
+                    />
+                    <div 
+                      className="position-absolute translate-middle-y text-muted cursor-pointer hover-rust" 
+                      style={{ top: '50%', right: '18px' }}
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </div>
+                  </div>
+                  {errors.password && <p className="text-danger small mt-1 ms-3 fw-medium">{errors.password.message}</p>}
+                </div>
+
+                <div className="form-check d-flex align-items-center mb-2 ms-2">
+                  <input 
+                    type="checkbox" 
+                    className="form-check-input rounded-circle border-secondary shadow-none me-2 mt-0 cursor-pointer" 
+                    id="keepSigned" 
+                    checked={keepSigned}
+                    onChange={(e) => setKeepSigned(e.target.checked)}
+                  />
+                  <label className="form-check-label text-muted small fw-medium cursor-pointer" htmlFor="keepSigned">Keep me signed in for 30 days</label>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-lg mt-2 transition-all hover-translate-up d-flex align-items-center justify-content-center gap-2"
+                  disabled={isSubmitting}
+                  style={{ fontSize: '1rem', letterSpacing: '1px' }}
+                >
+                  {isSubmitting ? 'VERIFYING ACCESS...' : 'SIGN IN NOW'} <FiArrowRight />
+                </button>
+              </form>
+
+              <div className="text-center mt-5">
+                <p className="text-muted small fw-medium">
+                  New to the collection? <Link href="/register" className="text-rust fw-bold text-decoration-none border-bottom border-rust border-opacity-25 ms-1">REQUEST ACCESS</Link>
+                </p>
               </div>
- 
-              <div className="mb-4 form-check d-flex align-items-center">
-                <input 
-                  type="checkbox" 
-                  className="form-check-input rounded-circle border-secondary shadow-none me-2 mt-0" 
-                  id="keepSigned" 
-                  checked={keepSigned}
-                  onChange={(e) => setKeepSigned(e.target.checked)}
-                />
-                <label className="form-check-label text-muted small" htmlFor="keepSigned">Keep me signed in</label>
-              </div>
-
-              <button 
-                type="submit" 
-                className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm"
-                disabled={isSubmitting}
-                style={{ fontSize: '1.1rem' }}
-              >
-                {isSubmitting ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
-
-            <div className="text-center mt-5">
-              <p className="text-muted small">
-                New to the collection? <Link href="/register" className="text-rust fw-bold text-decoration-none hover-rust">Request Access</Link>
-              </p>
-            </div>
-
+            </FadeIn>
           </div>
-
-
-
         </div>
       </div>
+
+      <style jsx>{`
+        .font-serif-italic { font-family: var(--font-serif); font-style: italic; }
+        .letter-spaced { letter-spacing: 2px; }
+        .shadow-xl { box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
+        .hover-translate-up:hover { transform: translateY(-5px); }
+        .focus-border-rust:focus { border-color: #B45309 !important; background-color: #fff !important; }
+        .animate-fade-in { animation: fadeIn 1s ease-out; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -62,7 +62,6 @@ export default function Navbar({
         { label: 'Home', path: '/' },
         { label: 'Salons', path: '/salons' },
         { label: 'Services', path: '/services' },
-        { label: 'Subscription', path: '/#pricing' },
         { label: 'Contact', path: '/contact' }
       ]) : [];
 
