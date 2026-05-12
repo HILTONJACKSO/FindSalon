@@ -32,35 +32,31 @@ export default function OwnerLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
+  const { user: profile, token, initialized, logout } = useAuthStore();
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get('/auth/profile/');
-        const userProfile = res.data;
-        setProfile(userProfile);
-        
-        if (userProfile.role !== 'OWNER' && userProfile.role !== 'ADMIN') {
-          router.push('/profile');
-        }
-      } catch (err) {
-        console.error("Failed to fetch profile", err);
+    // Only perform redirect logic once auth is initialized
+    if (initialized) {
+      if (!profile || !token) {
         router.push('/login');
+        return;
       }
-    };
-    fetchProfile();
-  }, [pathname, router]);
+      
+      if (profile.role !== 'OWNER' && profile.role !== 'ADMIN') {
+        router.push('/profile');
+      }
+    }
+  }, [initialized, profile, token, router]);
 
   const handleLogout = () => {
     logout();
     router.push('/login');
   };
 
-  if (!profile) return (
+  // Show loading screen while verifying credentials
+  if (!initialized || (!profile && token)) return (
     <div className="d-flex min-vh-100 align-items-center justify-content-center bg-sand">
         <div className="text-center">
             <div className="spinner-border text-rust mb-3" role="status"></div>
@@ -68,6 +64,10 @@ export default function OwnerLayout({
         </div>
     </div>
   );
+
+  // If we have no user and we're initialized, the useEffect will handle the redirect, 
+  // but we show a brief message here to avoid a flash of empty layout
+  if (!profile) return null;
 
   if (profile.role !== 'OWNER' && profile.role !== 'ADMIN') {
     return (

@@ -30,27 +30,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        const refreshToken = useAuthStore.getState().refreshToken;
-        if (!refreshToken) throw new Error('No refresh token');
-        
-        const response = await axios.post(`${api.defaults.baseURL}/auth/token/refresh/`, {
-          refresh: refreshToken,
-        });
-        
-        const newToken = response.data.access;
-        useAuthStore.getState().setTokens(newToken, refreshToken);
-        
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        useAuthStore.getState().logout();
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
+    // If we get a 401, it means the token is likely expired or invalid.
+    // Since we are using Firebase, the AuthProvider handles token lifecycle.
+    // We avoid automatic redirects here to prevent loops during initialization.
+    if (error.response?.status === 401) {
+      console.warn("API returned 401 Unauthorized. Token might be expired.");
+      // You could optionally trigger a logout here if you're sure the session is dead,
+      // but usually onAuthStateChanged will handle this.
     }
     return Promise.reject(error);
   }
