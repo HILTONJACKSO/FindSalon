@@ -54,7 +54,7 @@ export default function OwnerDealsPage() {
 
       
       if (salonsList.length > 0 && !currentDeal.salon) {
-        setCurrentDeal(prev => ({ ...prev, salon: salonsList[0].id }));
+        setCurrentDeal((prev: any) => ({ ...prev, salon: salonsList[0].id }));
       }
       setLoading(false);
     } catch (err) {
