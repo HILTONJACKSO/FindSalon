@@ -685,21 +685,13 @@ export default function Home() {
         </div>
 
         {/* BENTO GRID */}
-        <div className="bento-grid-container" style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(12, 1fr)', 
-          gridAutoRows: 'minmax(180px, auto)',
-          gap: '24px',
-          padding: '20px'
-        }}>
+        <div className="bento-grid">
           
           {/* Card 1: Grow Your Customer Base (Wide) */}
-          <div className="bento-card bento-dark bento-wide" style={{ 
-            gridColumn: 'span 8', 
-            gridRow: 'span 2',
+          <div className="bento-card bento-dark span-8 row-span-2" style={{ 
             background: '#121212',
             borderRadius: '32px',
-            padding: '40px',
+            padding: 'clamp(24px, 4vw, 40px)',
             color: 'white',
             position: 'relative',
             overflow: 'hidden',
@@ -746,12 +738,10 @@ export default function Home() {
           </div>
 
           {/* Card 2: Accept Digital Bookings (Tall) */}
-          <div className="bento-card bento-dark bento-tall" style={{ 
-            gridColumn: 'span 4', 
-            gridRow: 'span 3',
+          <div className="bento-card bento-dark span-4 row-span-3" style={{ 
             background: '#1A1A1A',
             borderRadius: '32px',
-            padding: '40px',
+            padding: 'clamp(24px, 4vw, 40px)',
             color: 'white',
             border: '1px solid rgba(255,255,255,0.05)',
             display: 'flex',
@@ -786,12 +776,10 @@ export default function Home() {
           </div>
 
           {/* Card 3: Increase Visibility (Square) */}
-          <div className="bento-card bento-dark" style={{ 
-            gridColumn: 'span 4', 
-            gridRow: 'span 2',
+          <div className="bento-card bento-dark span-4 row-span-2" style={{ 
             background: '#1A1A1A',
             borderRadius: '32px',
-            padding: '40px',
+            padding: 'clamp(24px, 4vw, 40px)',
             color: 'white',
             border: '1px solid rgba(255,255,255,0.05)'
           }}>
@@ -810,12 +798,10 @@ export default function Home() {
           </div>
 
           {/* Card 4: Revenue Analytics (Wide) */}
-          <div className="bento-card bento-dark" style={{ 
-            gridColumn: 'span 4', 
-            gridRow: 'span 2',
+          <div className="bento-card bento-dark span-4 row-span-2" style={{ 
             background: '#121212',
             borderRadius: '32px',
-            padding: '40px',
+            padding: 'clamp(24px, 4vw, 40px)',
             color: 'white',
             border: '1px solid rgba(255,255,255,0.05)',
             overflow: 'hidden'
@@ -838,12 +824,10 @@ export default function Home() {
           </div>
 
           {/* Card 5: Unified Free Call to Action (Large Card) */}
-          <div className="bento-card bento-dark" style={{ 
-            gridColumn: 'span 12', 
-            gridRow: 'span 2',
+          <div className="bento-card bento-dark span-12 row-span-2" style={{ 
             background: '#000',
             borderRadius: '40px',
-            padding: '50px',
+            padding: 'clamp(24px, 6vw, 60px)',
             color: 'white',
             border: '1px solid rgba(255,255,255,0.1)',
             marginTop: '20px'
@@ -1010,6 +994,8 @@ export default function Home() {
         input::placeholder { color: #A0968F; font-weight: 400; }
         .hover-card-premium { position: relative; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .hover-card-premium:hover { transform: translateY(-12px); box-shadow: 0 30px 60px -12px rgba(30, 25, 21, 0.15) !important; border-color: rgba(156, 74, 52, 0.2) !important; }
+        .row-span-2 { grid-row: span 2 !important; }
+        .row-span-3 { grid-row: span 3 !important; }
         .hover-zoom-premium { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .hover-card-premium:hover .hover-zoom-premium { transform: scale(1.1); }
         .action-reveal { transition: all 0.4s ease; }

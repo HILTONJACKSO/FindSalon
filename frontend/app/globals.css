@@ -244,6 +244,7 @@ body {
   .span-4 { grid-column: span 4 !important; }
   .span-12 { grid-column: span 12 !important; }
   .row-span-2 { grid-row: span 2 !important; }
+  .row-span-3 { grid-row: span 3 !important; }
 }
 
 .fluid-display-1 {
