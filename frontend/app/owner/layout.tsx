@@ -32,27 +32,28 @@ export default function OwnerLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user: profile, token, initialized, logout } = useAuthStore();
 
   useEffect(() => {
-    // Only perform redirect logic once auth is initialized
-    if (initialized) {
-      if (!profile || !token) {
-        router.push('/login');
-        return;
-      }
-      
-      if (profile.role !== 'OWNER' && profile.role !== 'ADMIN') {
-        router.push('/profile');
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && initialized) {
+      if (!profile) {
+        router.replace('/login');
+      } else if (profile.role !== 'OWNER' && profile.role !== 'ADMIN') {
+        router.replace('/profile');
       }
     }
-  }, [initialized, profile, token, router]);
+  }, [profile, initialized, router, mounted]);
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.replace('/login');
   };
 
   // Show loading screen while verifying credentials

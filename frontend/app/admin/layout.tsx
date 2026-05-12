@@ -16,15 +16,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    if (initialized) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && initialized) {
       if (!user) {
-        router.push('/login');
+        router.replace('/login');
       } else if (user.role !== 'ADMIN') {
-        router.push('/');
+        router.replace('/');
       }
     }
-  }, [user, initialized, router]);
+  }, [user, initialized, router, mounted]);
 
   if (!initialized || (user && user.role !== 'ADMIN')) {
     return (
