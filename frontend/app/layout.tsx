@@ -57,8 +57,8 @@ export const metadata: Metadata = {
     telephone: true,
   },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/icons/icon-192x192.png',
+    icon: '/icon.jpg',
+    apple: '/icon.jpg',
   },
 };
 
