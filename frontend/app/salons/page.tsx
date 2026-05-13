@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { FiSearch, FiMapPin, FiHeart, FiStar, FiGrid, FiMap, FiChevronRight, FiNavigation, FiSliders } from 'react-icons/fi';
 import { useSearchParams } from 'next/navigation';
@@ -122,7 +122,7 @@ const FilterContent = ({
   </>
 );
 
-export default function SalonSearch() {
+function SalonSearchContent() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
   const initialLocation = searchParams.get('location') || '';
@@ -239,7 +239,7 @@ export default function SalonSearch() {
           {/* PREMIUM MINIMALIST SIDEBAR & MOBILE FILTERS */}
           <AnimatePresence>
             {showMobileFilters && (
-              <div className="fixed-top w-100 h-100 bg-white z-index-modal p-4 overflow-auto animate-fade-in d-lg-none">
+              <div className="fixed-top w-100 h-100 bg-white z-index-modal p-4 overflow-auto animate-fade-in d-lg-none" style={{ zIndex: 1050 }}>
                 <div className="d-flex justify-content-between align-items-center mb-4">
                   <h4 className="fw-bold mb-0">Filters</h4>
                   <button className="btn btn-rust rounded-pill px-4 py-2 fw-bold" onClick={() => setShowMobileFilters(false)}>DONE</button>
@@ -323,7 +323,7 @@ export default function SalonSearch() {
                                <FiMapPin className="text-rust me-1" /> {salon.address.split(',')[0].toUpperCase()}
                              </div>
                              <Link href={`/salons/${salon.id}`} className="btn btn-dark rounded-pill px-4 py-2 small fw-bold shadow-sm transition-all hover-scale">
-                               BOOK NOW
+                                BOOK NOW
                              </Link>
                           </div>
                         </div>
@@ -370,5 +370,20 @@ export default function SalonSearch() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function SalonSearch() {
+  return (
+    <Suspense fallback={
+      <div className="bg-sand min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <div className="spinner-border text-rust" role="status"></div>
+          <p className="mt-3 text-muted fw-bold letter-spaced">PREPARING SEARCH...</p>
+        </div>
+      </div>
+    }>
+      <SalonSearchContent />
+    </Suspense>
   );
 }
