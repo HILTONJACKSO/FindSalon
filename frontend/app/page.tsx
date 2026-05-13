@@ -934,7 +934,7 @@ export default function Home() {
               <div className="bg-white bg-opacity-5 rounded-4 p-4 border border-white border-opacity-10 mt-4 mx-2">
                 <div className="d-flex align-items-center gap-3 mb-4 text-start">
                    <div className="bg-white rounded-3 p-2" style={{ width: '50px' }}>
-                     <img src="/icons/icon-192x192.png" className="w-100 rounded-2" alt="FS" 
+                     <img src="/icons/icon-192x192.jpg" className="w-100 rounded-2" alt="FS" 
                           onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<FiScissors class="text-rust" size={30} />' }} />
                    </div>
                    <div>
