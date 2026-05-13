@@ -41,10 +41,10 @@ services:
   # Frontend Service
   frontend:
     build: ./frontend
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost/api}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://72.61.15.24:8090/api}
     depends_on:
       - backend
     networks:
