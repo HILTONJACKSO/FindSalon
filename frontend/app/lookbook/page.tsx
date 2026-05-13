@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FiChevronLeft, FiHeart, FiShare2, FiShoppingBag, FiArrowRight, FiX, FiNavigation, FiStar } from 'react-icons/fi';
+import { FiChevronLeft, FiHeart, FiShare2, FiShoppingBag, FiArrowRight, FiX, FiNavigation, FiStar, FiClock } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { api, getImageUrl } from '@/lib/api';
