@@ -16,18 +16,48 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'FindSalon - Your Glow, Curated.',
-  description: 'Book the most prestigious beauty artisans in your city.',
+  title: {
+    default: 'FindSalon - Discover & Book Top Salons in Liberia',
+    template: '%s | FindSalon'
+  },
+  description: 'FindSalon is Liberia’s premier beauty marketplace. Book elite hair stylists, nail technicians, and spa services instantly. Secure appointments with ease.',
+  keywords: ['FindSalon', 'FindSalone', 'Salons in Liberia', 'Barbershop Monrovia', 'Hair Braiding Liberia', 'Beauty Services Liberia', 'Salon Booking App'],
+  authors: [{ name: 'FindSalon Team' }],
+  creator: 'FindSalon',
+  publisher: 'FindSalon',
+  manifest: '/manifest.json',
+  openGraph: {
+    type: 'website',
+    locale: 'en_LR',
+    url: 'https://findsalon.com',
+    siteName: 'FindSalon',
+    title: 'FindSalon - Your Glow, Curated.',
+    description: 'Book the most prestigious beauty artisans in your city. Liberia’s premier beauty marketplace.',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'FindSalon - Liberia’s Premier Beauty Marketplace',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FindSalon - Your Glow, Curated.',
+    description: 'Book the most prestigious beauty artisans in your city.',
+    images: ['/og-image.jpg'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'FindSalon',
   },
   formatDetection: {
-    telephone: false,
+    telephone: true,
   },
   icons: {
-    icon: '/logo.jpg',
+    icon: '/favicon.ico',
     apple: '/icons/icon-192x192.png',
   },
 };

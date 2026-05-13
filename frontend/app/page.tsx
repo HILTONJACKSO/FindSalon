@@ -126,8 +126,26 @@ export default function Home() {
     };
     fetchData();
   }, [userLocation]);
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'FindSalon',
+    alternateName: ['FindSalone', 'Find Salon Liberia'],
+    url: 'https://findsalon.com',
+    description: 'Liberia’s premier beauty marketplace for booking salons and spas.',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://findsalon.com/salons?q={search_term_string}',
+      'query-input': 'required name=search_term_string'
+    }
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Custom SVG Blob Mask Definition */}
       <svg width="0" height="0" style={{ position: 'absolute' }}>
         <defs>

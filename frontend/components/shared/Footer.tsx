@@ -24,7 +24,7 @@ export default function Footer() {
               <h5 className="text-white fw-bold mb-0">FindSalon</h5>
             </div>
             <p className="pe-md-5 text-white text-opacity-50" style={{ lineHeight: '1.8', maxWidth: '400px' }}>
-              Redefining the beauty booking experience through curated elegance and selection.
+              Redefining the beauty booking experience through curated elegance and selection. Liberia's premier marketplace for finding salons. (FindSalone)
             </p>
           </div>
           
