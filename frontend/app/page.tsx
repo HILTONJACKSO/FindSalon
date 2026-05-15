@@ -184,7 +184,7 @@ export default function Home() {
                   </span>
                 </h1>
                 <p className="mt-4 mb-5 mx-auto mx-lg-0 lead opacity-75" style={{ lineHeight: '1.6', maxWidth: '480px' }}>
-                  Experience the world's most premium salon curated network. Every touchpoint designed for your sophisticated lifestyle.
+                  Find and book the best salons in Monrovia no waiting, no stress, just premium beauty experiences.
                 </p>
 
                 {/* Flagship CTA - Replaces Search Inputs */}
