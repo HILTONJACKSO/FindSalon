@@ -114,20 +114,34 @@ export default function InstallPwa({ variant = 'floating' }: InstallPwaProps) {
                 {platform === 'ios' ? (
                   <div className="text-start bg-light rounded-4 p-3 mb-4">
                     <p className="small mb-2 fw-bold d-flex align-items-center gap-2">
-                      <FiShare className="text-rust" /> 1. Tap the 'Share' button below
+                      <FiShare className="text-rust" size={18} /> 1. Tap the 'Share' button in Safari
                     </p>
                     <p className="small mb-0 fw-bold d-flex align-items-center gap-2">
-                      <FiPlusSquare className="text-rust" /> 2. Select 'Add to Home Screen'
+                      <FiPlusSquare className="text-rust" size={18} /> 2. Select 'Add to Home Screen'
                     </p>
                   </div>
-                ) : (
+                ) : deferredPrompt ? (
                   <button 
                     onClick={handleInstallClick}
                     className="btn btn-rust w-100 rounded-pill py-3 fw-bold shadow-sm transition-all hover-scale"
                     style={{ background: '#FF4500', color: 'white' }}
                   >
-                    {deferredPrompt ? 'Install Now' : 'Show Instructions'}
+                    Install Now
                   </button>
+                ) : (
+                  <div className="text-start bg-light rounded-4 p-3 mb-4">
+                    <p className="small mb-2 fw-bold d-flex align-items-center gap-2">
+                      <FiShare className="text-rust" size={18} /> 1. Open your browser menu (⋮)
+                    </p>
+                    <p className="small mb-0 fw-bold d-flex align-items-center gap-2">
+                      <FiPlusSquare className="text-rust" size={18} /> 2. Select 'Install App' or 'Add to Home'
+                    </p>
+                    <div className="mt-3 p-2 bg-warning bg-opacity-10 rounded border border-warning border-opacity-25">
+                      <p className="tiny mb-0 text-dark opacity-75">
+                        <strong>Note:</strong> Installation requires a secure HTTPS connection. Please set up a domain for full app features.
+                      </p>
+                    </div>
+                  </div>
                 )}
 
                 <button 
