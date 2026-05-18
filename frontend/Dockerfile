@@ -5,7 +5,6 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 # Set environment variables for build time (if needed)
-ENV NEXT_PUBLIC_API_URL=http://your-vps-ip/api
 RUN npm run build
 
 # Stage 2: Run
