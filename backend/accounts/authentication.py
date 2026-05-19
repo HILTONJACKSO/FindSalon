@@ -24,8 +24,8 @@ class FirebaseAuthentication(authentication.BaseAuthentication):
                 decoded_token = auth.verify_id_token(id_token)
             except Exception as e:
                 print(f"DEBUG: Firebase Token Verification Failed: {e}")
-                # Raising AuthenticationFailed ensures a 401 response instead of a 403
-                raise exceptions.AuthenticationFailed(f"Invalid Firebase token: {str(e)}")
+                # Return None to allow fallback to JWTAuthentication
+                return None
     
             uid = decoded_token.get('uid')
             email = decoded_token.get('email')
