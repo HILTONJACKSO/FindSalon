@@ -131,7 +131,7 @@ export default function SettingsPage() {
 
     const fetchProfile = async () => {
       try {
-        const res = await api.get('/auth/profile/');
+        const res = await api.get(`/auth/profile/?t=${Date.now()}`);
         setFirstName(res.data.first_name || '');
         setLastName(res.data.last_name || '');
         setPhone(res.data.phone || '');

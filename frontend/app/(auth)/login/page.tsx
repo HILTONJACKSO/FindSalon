@@ -68,12 +68,12 @@ export default function LoginPage() {
         await setPersistence(auth, keepSigned ? browserLocalPersistence : browserSessionPersistence);
         const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
         token = await userCredential.user.getIdToken();
-        const profileRes = await api.get('auth/profile/', { headers: { Authorization: `Bearer ${token}` } });
+        const profileRes = await api.get(`auth/profile/?t=${Date.now()}`, { headers: { Authorization: `Bearer ${token}` } });
         userProfile = profileRes.data;
       } catch (fbErr) {
         const loginRes = await api.post('auth/login/', { email: data.email, password: data.password });
         token = loginRes.data.access;
-        const profileRes = await api.get('auth/profile/', { headers: { Authorization: `Bearer ${token}` } });
+        const profileRes = await api.get(`auth/profile/?t=${Date.now()}`, { headers: { Authorization: `Bearer ${token}` } });
         userProfile = profileRes.data;
       }
 

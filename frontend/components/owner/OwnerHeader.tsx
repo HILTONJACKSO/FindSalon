@@ -29,7 +29,7 @@ export default function OwnerHeader({ onQuickAction, searchPlaceholder, actionLa
       try {
         // 1. Fetch Profile
         try {
-          const profileRes = await api.get('/auth/profile/');
+          const profileRes = await api.get(`/auth/profile/?t=${Date.now()}`);
           setProfile(profileRes.data);
         } catch (e) {
           console.error("Profile fetch failed", e);

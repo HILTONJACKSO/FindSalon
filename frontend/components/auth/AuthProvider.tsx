@@ -17,7 +17,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         // Fetch additional user info from our Django backend
         try {
           // We'll need a special endpoint that identifies the user by Firebase UID
-          const res = await api.get('/auth/profile/', {
+          const res = await api.get(`/auth/profile/?t=${Date.now()}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           
