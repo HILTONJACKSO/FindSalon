@@ -153,7 +153,9 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="alert alert-danger py-2 px-3 small border-0 rounded-4 bg-danger bg-opacity-5 text-danger mb-4 text-center fw-medium">
+                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} 
+                  className="py-3 px-4 small rounded-4 mb-4 text-center fw-medium"
+                  style={{ backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>
                   {error}
                 </motion.div>
               )}
